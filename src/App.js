@@ -29,10 +29,14 @@ function App() {
   //load map contours
   //react looks into the '/public' folder by default
   async function fetchMap(){
-    fetch('us-states.geojson').then(paths=>{
-      paths.json().then(data=>{
-        setMap(data);
-      })
+    // fetch('us-states.geojson').then(paths=>{
+    //   paths.json().then(data=>{
+    //     console.log(data, 'lllll')
+    //     setMap(data);
+    //   })
+    // })
+    d3.json('countries_albers_10m.json').then(data => {
+      setMap(data);
     })
   }
 
@@ -103,58 +107,58 @@ function App() {
       }
 
   //function for a simpler chloropleth map
-  function makeBlackHat(){
+  // function makeBlackHat(){
 
-    return (
-      <>
-        <div style={{'width':'100%','height':'50%','display':'inline-block'}}>
-          <div 
-            style={{'height': '100%','width':'calc(100% - 15em)','display':'inline-block'}}
-          >
-              <Blackhat
-                map={map}
-                data={gunData}
-                ToolTip={ToolTip}
-                zoomedState={zoomedState}
-                setSelectedStuff={setSelectedStuff}
-                setZoomedState={setZoomedState}
-                brushedState={brushedState}
-                setBrushedState={setBrushedState}
-              />
-          </div>
-          <div 
-            className={'shadow'}
-            style={{'height': '100%','width':'14em','display':'inline-block','verticalAlign':'text-bottom'}}
-          >
-            <h1>{'Instructions'}</h1>
-            <p>{'Click on each state to zoom and unzoom'}</p>
-          </div>
-        </div>
-        <div style={{'height': '49%','width':'99%'}}>
-          <div className={'title'} 
-            style={{'height':'2em','width':'100%','fontWeight':'bold','fontFamily':'Georgia'}}
-          >
-            {'Gun Deaths'}
-          </div>
-          <div style={{'height': 'calc(100% - 2em)','width': '50%','maxWidth': '60em','marginLeft':'25%'}}>
-            <BlackHatStats
-              data={gunData}
-              ToolTip={ToolTip}
-            />     
-          </div>   
-        </div>
-      </>
-    )
-  }
+  //   return (
+  //     <>
+  //       <div style={{'width':'100%','height':'50%','display':'inline-block'}}>
+  //         <div 
+  //           style={{'height': '100%','width':'calc(100% - 15em)','display':'inline-block'}}
+  //         >
+  //             <Blackhat
+  //               map={map}
+  //               data={gunData}
+  //               ToolTip={ToolTip}
+  //               zoomedState={zoomedState}
+  //               setSelectedStuff={setSelectedStuff}
+  //               setZoomedState={setZoomedState}
+  //               brushedState={brushedState}
+  //               setBrushedState={setBrushedState}
+  //             />
+  //         </div>
+  //         <div 
+  //           className={'shadow'}
+  //           style={{'height': '100%','width':'14em','display':'inline-block','verticalAlign':'text-bottom'}}
+  //         >
+  //           <h1>{'Instructions'}</h1>
+  //           <p>{'Click on each state to zoom and unzoom'}</p>
+  //         </div>
+  //       </div>
+  //       <div style={{'height': '49%','width':'99%'}}>
+  //         <div className={'title'} 
+  //           style={{'height':'2em','width':'100%','fontWeight':'bold','fontFamily':'Georgia'}}
+  //         >
+  //           {'Gun Deaths'}
+  //         </div>
+  //         <div style={{'height': 'calc(100% - 2em)','width': '50%','maxWidth': '60em','marginLeft':'25%'}}>
+  //           <BlackHatStats
+  //             data={gunData}
+  //             ToolTip={ToolTip}
+  //           />     
+  //         </div>   
+  //       </div>
+  //     </>
+  //   )
+  // }
 
   //toggle which visualization we're looking at based on the "viewToggle" state
   const hat = ()=>{
     if(viewToggle === 'whitehat'){
       return makeWhiteHat();
     }
-    else{
-      return makeBlackHat();
-    }
+    // else{
+    //   return makeBlackHat();
+    // }
   }
 
   return (

@@ -1,5 +1,6 @@
 import React, {useRef,useMemo} from 'react';
 import useSVGCanvas from './useSVGCanvas.js';
+import * as topojson from "topojson";
 import * as d3 from 'd3';
 
 export default function Whitehat(props){
@@ -41,6 +42,7 @@ export default function Whitehat(props){
             const getEncodedFeature = d => d.count
 
             //this section of code sets up the colormap
+            //get each state count of gunshot
             const stateCounts = Object.values(stateData).map(getEncodedFeature);
 
             //get color extends for the color legend
@@ -51,11 +53,13 @@ export default function Whitehat(props){
             //so red is bad (p.s. this is not a good color scheme still)
             const stateScale = d3.scaleLinear()
                 .domain([stateMin,stateMax])
-                .range([1,0]);
+                .range([2,10]);
 
             //TODO: EDIT HERE TO CHANGE THE COLOR SCHEME
             //this function takes a number 0-1 and returns a color
-            const colorMap = d3.interpolateRdYlGn;
+            const colorMap = d3.scaleThreshold()
+                .domain(d3.range(2, 10))
+                .range(d3.schemeBlues[9]);
 
             //this set of functions extracts the features given the state name from the geojson
             function getCount(name){
@@ -74,7 +78,7 @@ export default function Whitehat(props){
             }
 
             function getStateColor(d){
-                return colorMap(getStateVal(d.properties.NAME))
+                return colorMap(getStateVal(d.properties.name))
             }
 
             //clear earlier drawings
@@ -83,22 +87,22 @@ export default function Whitehat(props){
             //OPTIONAL: EDIT THIS TO CHANGE THE DETAILS OF HOW THE MAP IS DRAWN
             //draw borders from map and add tooltip
             let mapGroup = svg.append('g').attr('class','mapbox');
-            mapGroup.selectAll('path').filter('.state')
-                .data(props.map.features).enter()
-                .append('path').attr('class','state')
+            mapGroup.selectAll('path')
+                .data(topojson.feature(props.map, props.map.objects.states).features).enter() 
                 //ID is useful if you want to do brushing as it gives you a way to select the path
-                .attr('id',d=> cleanString(d.properties.NAME))
-                .attr('d',geoGenerator)
+                // .attr('id',d=> cleanString(d.properties.name))
+                .append('path').attr('class','state')
+                .attr("d", d3.geoPath())
                 .attr('fill',getStateColor)
                 .attr('stroke','black')
                 .attr('stroke-width',.1)
                 .on('mouseover',(e,d)=>{
-                    let state = cleanString(d.properties.NAME);
+                    let state = cleanString(d.properties.name);
                     //this updates the brushed state
                     if(props.brushedState !== state){
                         props.setBrushedState(state);
                     }
-                    let sname = d.properties.NAME;
+                    let sname = d.properties.name;
                     let count = getCount(sname);
                     let text = sname + '</br>'
                         + 'Gun Deaths: ' + count;
