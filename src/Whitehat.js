@@ -11,7 +11,7 @@ export default function Whitehat(props){
     //this will automatically resize when the window changes so passing svg to a useeffect will re-trigger
     const [svg, height, width, tTip] = useSVGCanvas(d3Container);
     var isZoomed = false;
-
+    console.log(props.map)
     //TODO: change the line below to change the size of the white-hat maximum bubble size
     const maxRadius = width/100;
 
@@ -46,21 +46,19 @@ export default function Whitehat(props){
             const stateCounts = Object.values(stateData).map(getEncodedFeature);
 
             //get color extends for the color legend
-            const [stateMin,stateMax] = d3.extent(stateCounts);
+            const [stateMin, stateMax] = d3.extent(stateCounts);
 
             //color map scale, scales numbers to a smaller range to use with a d3 color scale
             //we're using 1-0 to invert the red-yellow-green color scale
             //so red is bad (p.s. this is not a good color scheme still)
             const stateScale = d3.scaleLinear()
                 .domain([stateMin,stateMax])
-                .range([2,10]);
+                .range([1, 0]);
 
             //TODO: EDIT HERE TO CHANGE THE COLOR SCHEME
             //this function takes a number 0-1 and returns a color
-            const colorMap = d3.scaleThreshold()
-                .domain(d3.range(2, 10))
-                .range(d3.schemeBlues[9]);
-
+            
+            const colorMap = d3.interpolateCividis
             //this set of functions extracts the features given the state name from the geojson
             function getCount(name){
                 //map uses full name, dataset uses abreviations
@@ -89,13 +87,13 @@ export default function Whitehat(props){
             let mapGroup = svg.append('g').attr('class','mapbox');
             mapGroup.selectAll('path')
                 .data(topojson.feature(props.map, props.map.objects.states).features).enter() 
-                //ID is useful if you want to do brushing as it gives you a way to select the path
-                // .attr('id',d=> cleanString(d.properties.name))
                 .append('path').attr('class','state')
                 .attr("d", d3.geoPath())
                 .attr('fill',getStateColor)
                 .attr('stroke','black')
                 .attr('stroke-width',.1)
+                //ID is useful if you want to do brushing as it gives you a way to select the path
+                .attr('id', d => cleanString(d.properties.name))
                 .on('mouseover',(e,d)=>{
                     let state = cleanString(d.properties.name);
                     //this updates the brushed state
@@ -114,7 +112,11 @@ export default function Whitehat(props){
                     props.setBrushedState();
                     props.ToolTip.hideTTip(tTip);
                 });
-
+                
+            // move the map to the center of the svg
+            let gElementWidth = d3.select('g').node().getBBox().width;
+            let translateX = (width - gElementWidth) / 2;
+            mapGroup.attr('transform', `translate(${translateX}, 0)`);
 
             //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius). 
             //draw markers for each city
@@ -242,7 +244,7 @@ export default function Whitehat(props){
             //if we are zoomed in, unzoom instead
             isZoomed = !isZoomed;
             if(isZoomed){
-                props.setZoomedState(d.properties.NAME);
+                props.setZoomedState(d.properties.name);
             } else{
                 props.setZoomedState(undefined);
             }
@@ -264,12 +266,12 @@ export default function Whitehat(props){
         if(mapGroupSelection !== undefined){
             const isBrushed = props.brushedState !== undefined;
             mapGroupSelection.selectAll('.state')
-                .attr('opacity',isBrushed? .4:.8)
-                .attr('strokeWidth',isBrushed? 1:2);
+                .attr('opacity',isBrushed? .4: .8)
+                .attr('strokeWidth',isBrushed? 1: 2);
             if(isBrushed){
                 mapGroupSelection.select('#'+props.brushedState)
                     .attr('opacity',1)
-                    .attr('strokeWidth',3);
+                    .attr('strokeWidth',50);
             }
         }
     },[mapGroupSelection,props.brushedState]);
