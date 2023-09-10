@@ -1,4 +1,4 @@
-import React, {useRef,useMemo} from 'react';
+import React, {useRef, useMemo, useState} from 'react';
 import useSVGCanvas from './useSVGCanvas.js';
 import * as topojson from "topojson";
 import * as d3 from 'd3';
@@ -11,17 +11,17 @@ export default function Whitehat(props){
     //this will automatically resize when the window changes so passing svg to a useeffect will re-trigger
     const [svg, height, width, tTip] = useSVGCanvas(d3Container);
     var isZoomed = false;
-    console.log(props.map)
+
     //TODO: change the line below to change the size of the white-hat maximum bubble size
     const maxRadius = width/100;
 
     //albers usa projection puts alaska in the corner
     //this automatically convert latitude and longitude to coordinates on the svg canvas
-    const projection = d3.geoAlbersUsa()
-        .translate([width/2,height/2]);
+    const projection = d3.geoAlbersUsa().scale(1300).translate([487.5, 305])
+        // .translate([width/2,height/2]);
 
     //set up the path generator to draw the states
-    const geoGenerator = d3.geoPath().projection(projection);
+    const geoGenerator = d3.geoPath();
 
     //we need to use this function to convert state names into ids so we can select individual states by name using javascript selectors
     //since spaces makes it not work correctly
@@ -88,12 +88,13 @@ export default function Whitehat(props){
             mapGroup.selectAll('path')
                 .data(topojson.feature(props.map, props.map.objects.states).features).enter() 
                 .append('path').attr('class','state')
-                .attr("d", d3.geoPath())
+                .attr('id', d => cleanString(d.properties.name))
+                .attr("d", geoGenerator)
                 .attr('fill',getStateColor)
                 .attr('stroke','black')
                 .attr('stroke-width',.1)
                 //ID is useful if you want to do brushing as it gives you a way to select the path
-                .attr('id', d => cleanString(d.properties.name))
+
                 .on('mouseover',(e,d)=>{
                     let state = cleanString(d.properties.name);
                     //this updates the brushed state
@@ -113,10 +114,7 @@ export default function Whitehat(props){
                     props.ToolTip.hideTTip(tTip);
                 });
                 
-            // move the map to the center of the svg
-            let gElementWidth = d3.select('g').node().getBBox().width;
-            let translateX = (width - gElementWidth) / 2;
-            mapGroup.attr('transform', `translate(${translateX}, 0)`);
+            mapGroup.attr('transform', `translate(${svgCenter()}, 0)`);
 
             //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius). 
             //draw markers for each city
@@ -145,10 +143,10 @@ export default function Whitehat(props){
                 let bounds = mapGroup.node().getBBox();
                 const barHeight = Math.min(height/10,40);
                 
-                let legendX = bounds.x + 10 + bounds.width;
+                let legendX = bounds.x + 200 + bounds.width;
                 const barWidth = Math.min((width - legendX)/3,40);
                 const fontHeight = Math.min(barWidth/2,16);
-                let legendY = bounds.y + 2*fontHeight;
+                let legendY = bounds.y + 5*fontHeight;
                 
                 let colorLData = [];
                 //OPTIONAL: EDIT THE VALUES IN THE ARRAY TO CHANGE THE NUMBER OF ITEMS IN THE COLOR LEGEND
@@ -180,7 +178,7 @@ export default function Whitehat(props){
     
                 svg.selectAll('.legendText').remove();
                 const legendTitle = {
-                    'x': legendX - barWidth,
+                    'x': legendX  - 70,
                     'y': bounds.y,
                     'text': 'Gun Deaths' 
                 }
@@ -198,6 +196,13 @@ export default function Whitehat(props){
         }
     },[svg,props.map,props.data])
 
+    // move the map to the center of the svg
+    function svgCenter() {
+        let gElementWidth = d3.select('g').node().getBBox().width;
+        let centerWith = (width - gElementWidth) / 2
+        return centerWith
+    }
+
     //This adds zooming. Triggers whenever the function above finishes
     //this section can be included in the main body but is here as an example 
     //of how to do multiple hooks so updates don't have to occur in every state
@@ -209,7 +214,7 @@ export default function Whitehat(props){
             const {transform} = event;
             mapGroupSelection
                 .attr("transform", transform)
-               .attr("stroke-width", 1 / transform.k);
+                .attr("stroke-width", 1 / transform.k);
         }
 
         const zoom = d3.zoom()
@@ -222,7 +227,7 @@ export default function Whitehat(props){
             if(isZoomed){
                 mapGroupSelection.transition().duration(300).call(
                     zoom.transform,
-                    d3.zoomIdentity.translate(0,0),
+                    d3.zoomIdentity.translate(svgCenter(),0),
                     d3.pointer(event,svg.node())
                 )
                     
