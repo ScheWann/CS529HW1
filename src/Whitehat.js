@@ -11,17 +11,14 @@ export default function Whitehat(props){
     //this will automatically resize when the window changes so passing svg to a useeffect will re-trigger
     const [svg, height, width, tTip] = useSVGCanvas(d3Container);
     var isZoomed = false;
-
     //TODO: change the line below to change the size of the white-hat maximum bubble size
     const maxRadius = width/100;
-
     //albers usa projection puts alaska in the corner
     //this automatically convert latitude and longitude to coordinates on the svg canvas
-    const projection = d3.geoAlbersUsa().scale(1300).translate([487.5, 305])
-        // .translate([width/2,height/2]);
+    const projection = d3.geoAlbersUsa().translate([width/2,height/2]);
 
     //set up the path generator to draw the states
-    const geoGenerator = d3.geoPath();
+    const geoGenerator = d3.geoPath().projection(projection);
 
     //we need to use this function to convert state names into ids so we can select individual states by name using javascript selectors
     //since spaces makes it not work correctly
@@ -114,7 +111,6 @@ export default function Whitehat(props){
                     props.ToolTip.hideTTip(tTip);
                 });
                 
-            mapGroup.attr('transform', `translate(${svgCenter()}, 0)`);
 
             //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius). 
             //draw markers for each city
@@ -196,13 +192,6 @@ export default function Whitehat(props){
         }
     },[svg,props.map,props.data])
 
-    // move the map to the center of the svg
-    function svgCenter() {
-        let gElementWidth = d3.select('g').node().getBBox().width;
-        let centerWith = (width - gElementWidth) / 2
-        return centerWith
-    }
-
     //This adds zooming. Triggers whenever the function above finishes
     //this section can be included in the main body but is here as an example 
     //of how to do multiple hooks so updates don't have to occur in every state
@@ -227,15 +216,13 @@ export default function Whitehat(props){
             if(isZoomed){
                 mapGroupSelection.transition().duration(300).call(
                     zoom.transform,
-                    d3.zoomIdentity.translate(svgCenter(),0),
-                    d3.pointer(event,svg.node())
-                )
-                    
+                    d3.zoomIdentity.translate(0,0),
+                    d3.pointer(event, svg.node())
+                )         
             }
             else{
                 //get bounds of path from map
                 const [[x0, y0], [x1, y1]] = geoGenerator.bounds(d);
-                //zoom to bounds
                 mapGroupSelection.transition().duration(750).call(
                     zoom.transform,
                     d3.zoomIdentity

@@ -31,11 +31,10 @@ function App() {
   async function fetchMap(){
     // fetch('us-states.geojson').then(paths=>{
     //   paths.json().then(data=>{
-    //     console.log(data, 'lllll')
     //     setMap(data);
     //   })
     // })
-    d3.json('countries_albers_10m.json').then(data => {
+    d3.json('counties-10m.json').then(data => {
       setMap(data);
     })
   }
