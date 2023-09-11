@@ -223,6 +223,7 @@ export default function Whitehat(props){
             else{
                 //get bounds of path from map
                 const [[x0, y0], [x1, y1]] = geoGenerator.bounds(d);
+                //zoom to bounds
                 mapGroupSelection.transition().duration(750).call(
                     zoom.transform,
                     d3.zoomIdentity
