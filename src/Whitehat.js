@@ -10,6 +10,64 @@ export default function Whitehat(props){
     //tTip automatically attaches a div of the class 'tooltip' if it doesn't already exist
     //this will automatically resize when the window changes so passing svg to a useeffect will re-trigger
     const [svg, height, width, tTip] = useSVGCanvas(d3Container);
+    const stateFormFIPS = {
+        "1": { "PostalAbbr": "AL", "State": "Alabama" },
+        "2": { "PostalAbbr": "AK", "State": "Alaska" },
+        "4": { "PostalAbbr": "AZ", "State": "Arizona" },
+        "5": { "PostalAbbr": "AR", "State": "Arkansas" },
+        "6": { "PostalAbbr": "CA", "State": "California" },
+        "8": { "PostalAbbr": "CO", "State": "Colorado" },
+        "9": { "PostalAbbr": "CT", "State": "Connecticut" },
+        "10": { "PostalAbbr": "DE", "State": "Delaware" },
+        "11": { "PostalAbbr": "DC", "State": "District of Columbia" },
+        "12": { "PostalAbbr": "FL", "State": "Florida" },
+        "13": { "PostalAbbr": "GA", "State": "Georgia" },
+        "15": { "PostalAbbr": "HI", "State": "Hawaii" },
+        "16": { "PostalAbbr": "ID", "State": "Idaho" },
+        "17": { "PostalAbbr": "IL", "State": "Illinois" },
+        "18": { "PostalAbbr": "IN", "State": "Indiana" },
+        "19": { "PostalAbbr": "IA", "State": "Iowa" },
+        "20": { "PostalAbbr": "KS", "State": "Kansas" },
+        "21": { "PostalAbbr": "KY", "State": "Kentucky" },
+        "22": { "PostalAbbr": "LA", "State": "Louisiana" },
+        "23": { "PostalAbbr": "ME", "State": "Maine" },
+        "24": { "PostalAbbr": "MD", "State": "Maryland" },
+        "25": { "PostalAbbr": "MA", "State": "Massachusetts" },
+        "26": { "PostalAbbr": "MI", "State": "Michigan" },
+        "27": { "PostalAbbr": "MN", "State": "Minnesota" },
+        "28": { "PostalAbbr": "MS", "State": "Mississippi" },
+        "29": { "PostalAbbr": "MO", "State": "Missouri" },
+        "30": { "PostalAbbr": "MT", "State": "Montana" },
+        "31": { "PostalAbbr": "NE", "State": "Nebraska" },
+        "32": { "PostalAbbr": "NV", "State": "Nevada" },
+        "33": { "PostalAbbr": "NH", "State": "New Hampshire" },
+        "34": { "PostalAbbr": "NJ", "State": "New Jersey" },
+        "35": { "PostalAbbr": "NM", "State": "New Mexico" },
+        "36": { "PostalAbbr": "NY", "State": "New York" },
+        "37": { "PostalAbbr": "NC", "State": "North Carolina" },
+        "38": { "PostalAbbr": "ND", "State": "North Dakota" },
+        "39": { "PostalAbbr": "OH", "State": "Ohio" },
+        "40": { "PostalAbbr": "OK", "State": "Oklahoma" },
+        "41": { "PostalAbbr": "OR", "State": "Oregon" },
+        "42": { "PostalAbbr": "PA", "State": "Pennsylvania" },
+        "44": { "PostalAbbr": "RI", "State": "Rhode Island" },
+        "45": { "PostalAbbr": "SC", "State": "South Carolina" },
+        "46": { "PostalAbbr": "SD", "State": "South Dakota" },
+        "47": { "PostalAbbr": "TN", "State": "Tennessee" },
+        "48": { "PostalAbbr": "TX", "State": "Texas" },
+        "49": { "PostalAbbr": "UT", "State": "Utah" },
+        "50": { "PostalAbbr": "VT", "State": "Vermont" },
+        "51": { "PostalAbbr": "VA", "State": "Virginia" },
+        "53": { "PostalAbbr": "WA", "State": "Washington" },
+        "54": { "PostalAbbr": "WV", "State": "West Virginia" },
+        "55": { "PostalAbbr": "WI", "State": "Wisconsin" },
+        "56": { "PostalAbbr": "WY", "State": "Wyoming" },
+        "60": { "PostalAbbr": "AS", "State": "American Samoa" },
+        "66": { "PostalAbbr": "GU", "State": "Guam"},
+        "69": { "PostalAbbr": "MP", "State": "Northern Mariana Islands" },
+        "72": { "PostalAbbr": "PR", "State": "Puerto Rico" },
+        "78": { "PostalAbbr": "VI", "State": "Virgin Islands" },
+      };
     var isZoomed = false;
     //TODO: change the line below to change the size of the white-hat maximum bubble size
     const maxRadius = width/100;
@@ -34,25 +92,28 @@ export default function Whitehat(props){
         if(svg !== undefined & props.map !== undefined & props.data !== undefined){
 
             const stateData = props.data.states;
-
-            //EDIT THIS TO CHANGE WHAT IS USED TO ENCODE COLOR
-            const getEncodedFeature = d => d.count
+            const countyData = props.data.counties;
+            //calucate the gun death rate per 100000
+            const getEncodedFeature = d => ((d.count * 100000) / d.population).toFixed(1)
 
             //this section of code sets up the colormap
             //get each state count of gunshot
             const stateCounts = Object.values(stateData).map(getEncodedFeature);
-
+            const countyCounts = Object.values(countyData).map(getEncodedFeature);
             //get color extends for the color legend
             const [stateMin, stateMax] = d3.extent(stateCounts);
-
+            const [countyMin, countyMax] = d3.extent(countyCounts)
+            // console.log(countyMin, countyMax, 'plplplplplp')
             //color map scale, scales numbers to a smaller range to use with a d3 color scale
             //we're using 1-0 to invert the red-yellow-green color scale
             //so red is bad (p.s. this is not a good color scheme still)
             const stateScale = d3.scaleLinear()
                 .domain([stateMin,stateMax])
                 .range([1, 0]);
-
-            //TODO: EDIT HERE TO CHANGE THE COLOR SCHEME
+            const countyScale = d3.scaleLinear()
+                .domain([countyMin, countyMax])
+                .range([1, 0]);
+                
             //this function takes a number 0-1 and returns a color
             
             const colorMap = d3.interpolateCividis
@@ -66,128 +127,170 @@ export default function Whitehat(props){
                 }
                 return getEncodedFeature(entry[0]);
             }
+
+            function getCountyCount(id, name) {
+                //convert county id to state id based on FIPS to match
+                let stateName = stateFormFIPS[(Math.floor(id / 1000)).toString()].State
+                let entry = countyData.filter(d => (d.state===stateName && d.county === name));
+                if(entry === undefined | entry.length < 1){
+                    return 0
+                }
+                return getEncodedFeature(entry[0]);
+            }
+
             function getStateVal(name){
                 let count = getCount(name);
                 let val = stateScale(count);
                 return val
             }
 
-            function getStateColor(d){
+            function getCountyVal(id, name) {
+                let count = getCountyCount(id, name);
+                let val = countyScale(count);
+                console.log(val, 'no clear')
+                return val
+            }
+
+            //get county tip data
+            function getCountyTipData(id, name) {
+                let stateName = stateFormFIPS[(Math.floor(id / 1000)).toString()].State
+                let entry = countyData.filter(d => (d.state===stateName && d.county === name));
+                if(entry === undefined | entry.length < 1){
+                    return {
+                        rate: 0,
+                        population: 'unknown',
+                        state: stateName,
+                        count: 0
+                    }
+                }
+                let countyDir = {
+                    rate: getEncodedFeature(entry[0]),
+                    population: entry[0].population,
+                    state: entry[0].abreviation,
+                    count: entry[0].count
+                }
+                return countyDir
+            }
+            function getStateColor(d) {
                 return colorMap(getStateVal(d.properties.name))
+            }
+
+            function getCountyColor(d) {
+                return colorMap(getCountyVal(d.id, d.properties.name))
             }
 
             //clear earlier drawings
             svg.selectAll('g').remove();
 
-            //OPTIONAL: EDIT THIS TO CHANGE THE DETAILS OF HOW THE MAP IS DRAWN
             //draw borders from map and add tooltip
             let mapGroup = svg.append('g').attr('class','mapbox');
-            mapGroup.selectAll('path')
-                .data(topojson.feature(props.map, props.map.objects.states).features).enter() 
-                .append('path').attr('class','state')
-                .attr('id', d => cleanString(d.properties.name))
-                .attr("d", geoGenerator)
-                .attr('fill',getStateColor)
-                .attr('stroke','black')
-                .attr('stroke-width',.1)
-                //ID is useful if you want to do brushing as it gives you a way to select the path
+            mapGroup.append("g")
+            .selectAll("path")
+            .data(topojson.feature(props.map, props.map.objects.counties).features).enter()
+            .append("path").attr("class", "county")
+            .attr("d", geoGenerator)
+            .attr('fill',getCountyColor)
+            .attr('stroke','black')
+            .attr('stroke-width',.1)   
+            .on('mouseover',(e,d)=>{
+                let county = cleanString(d.properties.name);
+                //this updates the brushed state
+                if(props.brushedCounty !== county){
+                    props.setBrushedCounty(county);
+                }
+                let cname = d.properties.name;
+                let countyTip = getCountyTipData(d.id, cname);
+                let text = '<strong>' + cname + ', ' + countyTip.state + '</strong>' + '</br>'
+                    + 'Gun Deaths per 100000: ' + countyTip.rate + '</br>'
+                    + 'Victims: ' + countyTip.count + '</br>'
+                    + 'Population: ' + countyTip.population
+                tTip.html(text);
+            }).on('mousemove',(e)=>{
+                //see app.js for the helper function that makes this easier
+                props.ToolTip.moveTTipEvent(tTip,e);
+            }).on('mouseout',(e,d)=>{
+                props.setBrushedCounty();
+                props.ToolTip.hideTTip(tTip);
+            });
 
-                .on('mouseover',(e,d)=>{
-                    let state = cleanString(d.properties.name);
-                    //this updates the brushed state
-                    if(props.brushedState !== state){
-                        props.setBrushedState(state);
-                    }
-                    let sname = d.properties.name;
-                    let count = getCount(sname);
-                    let text = sname + '</br>'
-                        + 'Gun Deaths: ' + count;
-                    tTip.html(text);
-                }).on('mousemove',(e)=>{
-                    //see app.js for the helper function that makes this easier
-                    props.ToolTip.moveTTipEvent(tTip,e);
-                }).on('mouseout',(e,d)=>{
-                    props.setBrushedState();
-                    props.ToolTip.hideTTip(tTip);
-                });
-                
+
 
             //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius). 
             //draw markers for each city
-            const cityData = props.data.cities
-            const cityMax = d3.max(cityData.map(d=>d.count));
-            const cityScale = d3.scaleLinear()
-                .domain([0,cityMax])
-                .range([0,maxRadius]);
+            // const cityData = props.data.cities
+            // const cityMax = d3.max(cityData.map(d=>d.count));
+            // const cityScale = d3.scaleLinear()
+            //     .domain([0,cityMax])
+            //     .range([0,maxRadius]);
 
-            mapGroup.selectAll('.city').remove();
+            // mapGroup.selectAll('.city').remove();
 
             //TODO: Add code for a tooltip when you mouse over the city (hint: use the same code for the state tooltip events .on... and modify what is used for the tTip.html)
             //OPTIONAL: change the color or opacity
-            mapGroup.selectAll('.city')
-                .data(cityData).enter()
-                .append('circle').attr('class','city')
-                .attr('id',d=>d.key)
-                .attr('cx',d=> projection([d.lng,d.lat])[0])
-                .attr('cy',d=> projection([d.lng,d.lat])[1])
-                .attr('r',d=>cityScale(d.count))
-                .attr('opacity',.5);                
+            // mapGroup.selectAll('.city')
+            //     .data(cityData).enter()
+            //     .append('circle').attr('class','city')
+            //     .attr('id',d=>d.key)
+            //     .attr('cx',d=> projection([d.lng,d.lat])[0])
+            //     .attr('cy',d=> projection([d.lng,d.lat])[1])
+            //     .attr('r',d=>cityScale(d.count))
+            //     .attr('opacity',.5);                
 
             
             //draw a color legend, automatically scaled based on data extents
-            function drawLegend(){
-                let bounds = mapGroup.node().getBBox();
-                const barHeight = Math.min(height/10,40);
+            // function drawLegend(){
+            //     let bounds = mapGroup.node().getBBox();
+            //     const barHeight = Math.min(height/10,40);
                 
-                let legendX = bounds.x + 200 + bounds.width;
-                const barWidth = Math.min((width - legendX)/3,40);
-                const fontHeight = Math.min(barWidth/2,16);
-                let legendY = bounds.y + 5*fontHeight;
+            //     let legendX = bounds.x + 200 + bounds.width;
+            //     const barWidth = Math.min((width - legendX)/3,40);
+            //     const fontHeight = Math.min(barWidth/2,16);
+            //     let legendY = bounds.y + 5*fontHeight;
                 
-                let colorLData = [];
-                //OPTIONAL: EDIT THE VALUES IN THE ARRAY TO CHANGE THE NUMBER OF ITEMS IN THE COLOR LEGEND
-                for(let ratio of [0.1,.2,.3,.4,.5,.6,.7,.8,.9,.99]){
-                    let val = (1-ratio)*stateMin + ratio*stateMax;
-                    let scaledVal = stateScale(val);
-                    let color = colorMap(scaledVal);
-                    let entry = {
-                        'x': legendX,
-                        'y': legendY,
-                        'value': val,
-                        'color':color,
-                    }
-                    entry.text = (entry.value).toFixed(0);
+            //     let colorLData = [];
+            //     //OPTIONAL: EDIT THE VALUES IN THE ARRAY TO CHANGE THE NUMBER OF ITEMS IN THE COLOR LEGEND
+            //     for(let ratio of [0.1,.2,.3,.4,.5,.6,.7,.8,.9,.99]){
+            //         let val = (1-ratio)*countyMin + ratio*countyMax;
+            //         let scaledVal = stateScale(val);
+            //         let color = colorMap(scaledVal);
+            //         let entry = {
+            //             'x': legendX,
+            //             'y': legendY,
+            //             'value': val,
+            //             'color':color,
+            //         }
+            //         entry.text = (entry.value).toFixed(0);
             
-                    colorLData.push(entry);
-                    legendY += barHeight;
-                }
+            //         colorLData.push(entry);
+            //         legendY += barHeight;
+            //     }
     
-                svg.selectAll('.legendRect').remove();
-                svg.selectAll('.legendRect')
-                    .data(colorLData).enter()
-                    .append('rect').attr('class','legendRect')
-                    .attr('x',d=>d.x)
-                    .attr('y',d=>d.y)
-                    .attr('fill',d=>d.color)
-                    .attr('height',barHeight)
-                    .attr('width',barWidth);
+            //     svg.selectAll('.legendRect').remove();
+            //     svg.selectAll('.legendRect')
+            //         .data(colorLData).enter()
+            //         .append('rect').attr('class','legendRect')
+            //         .attr('x',d=>d.x)
+            //         .attr('y',d=>d.y)
+            //         .attr('fill',d=>d.color)
+            //         .attr('height',barHeight)
+            //         .attr('width',barWidth);
     
-                svg.selectAll('.legendText').remove();
-                const legendTitle = {
-                    'x': legendX  - 70,
-                    'y': bounds.y,
-                    'text': 'Gun Deaths' 
-                }
-                svg.selectAll('.legendText')
-                    .data([legendTitle].concat(colorLData)).enter()
-                    .append('text').attr('class','legendText')
-                    .attr('x',d=>d.x+barWidth+5)
-                    .attr('y',d=>d.y+barHeight/2 + fontHeight/4)
-                    .attr('font-size',(d,i) => i == 0? 1.2*fontHeight:fontHeight)
-                    .text(d=>d.text);
-            }
+            //     svg.selectAll('.legendText').remove();
+            //     const legendTitle = {
+            //         'x': legendX  - 70,
+            //         'y': bounds.y,
+            //         'text': 'Gun Deaths' 
+            //     }
+            //     svg.selectAll('.legendText')
+            //         .data([legendTitle].concat(colorLData)).enter()
+            //         .append('text').attr('class','legendText')
+            //         .attr('x',d=>d.x+barWidth+5)
+            //         .attr('y',d=>d.y+barHeight/2 + fontHeight/4)
+            //         .attr('font-size',(d,i) => i == 0? 1.2*fontHeight:fontHeight)
+            //         .text(d=>d.text);
+            // }
 
-            drawLegend();
+            // drawLegend();
             return mapGroup
         }
     },[svg,props.map,props.data])

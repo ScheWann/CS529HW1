@@ -1,4 +1,5 @@
 import React, {useState,useEffect, useMemo} from 'react';
+import { Tabs } from 'antd';
 import './App.css';
 import Whitehat from './Whitehat';
 import WhiteHatStats from './WhiteHatStats'
@@ -8,20 +9,35 @@ import * as d3 from 'd3';
 
 
 function App() {
-
+  // Tabs definations
+  const items = [
+    {
+      key: 'white',
+      label: 'White Hat',
+    },
+    {
+      key: 'black',
+      label: 'Black Hat',
+    }
+  ];
   //state deciding if we are looking at the blackhat or whitehat visualization
-  const [viewToggle, setViewToggle] = useState('blackhat');
+  const [viewToggle, setViewToggle] = useState('whitehat');
 
   //state for the data, since it loads asynchronously
-  const [map, setMap] = useState();
+  const [whitemap, setwhiteMap] = useState();
+  const [blackmap, setblackMap] = useState();
+
   const [gunData, setGunData] = useState();
 
-  //we put some states (brushing, zooming)
   //at the top level and pass setZoomedState etc to the map
   //so we can do brushing accross multiple components
-  const [zoomedState,setZoomedState] = useState();
-  const [selectedStuff,setSelectedStuff] = useState();
-  const [brushedState,setBrushedState] = useState();
+  const [zoomedState, setZoomedState] = useState();
+  const [zoomedCounty, setZoomedCounty] = useState();
+
+  const [selectedStuff, setSelectedStuff] = useState();
+
+  const [brushedState, setBrushedState] = useState();
+  const [brushedCounty, setBrushedCounty] = useState();
 
   //filter for the linked view in whitehat stats
   const [sortKey,setSortKey] = useState('age');
@@ -29,19 +45,19 @@ function App() {
   //load map contours
   //react looks into the '/public' folder by default
   async function fetchMap(){
-    // fetch('us-states.geojson').then(paths=>{
-    //   paths.json().then(data=>{
-    //     setMap(data);
-    //   })
-    // })
+    fetch('us-states.geojson').then(paths=>{
+      paths.json().then(data=>{
+        setblackMap(data);
+      })
+    })
     d3.json('counties-10m.json').then(data => {
-      setMap(data);
+      setwhiteMap(data);
     })
   }
 
   //fetch gun data and attach a timestamp to make sorting dates easier for filters
   async function fetchGunData(){
-    fetch('processed_gundeaths_data.json').then(d => {
+    fetch('new_processed_gundeaths_data.json').then(d => {
       d.json().then(gd=>{
         console.log('gundata',gd)
         setGunData(gd);
@@ -49,6 +65,14 @@ function App() {
     })
   }
 
+  //function on clicking the tabs
+  const onChange = (key) => {
+    if(key == 'white') {
+      setViewToggle('whitehat')
+    } else {
+      setViewToggle('blackhat')
+    }
+  };
 
   //fetch data, called only once
   useEffect(()=>{
@@ -67,14 +91,14 @@ function App() {
                 style={{'height': '100%','width':'calc(100% - 15em)','display':'inline-block'}}
               >
                   <Whitehat
-                    map={map}
+                    map={whitemap}
                     data={gunData}
                     ToolTip={ToolTip}
-                    zoomedState={zoomedState}
+                    zoomedCounty={zoomedCounty}
                     setSelectedStuff={setSelectedStuff}
-                    setZoomedState={setZoomedState}
-                    brushedState={brushedState}
-                    setBrushedState={setBrushedState}
+                    setZoomedCounty={setZoomedCounty}
+                    brushedCounty={brushedCounty}
+                    setBrushedCounty={setBrushedCounty}
                   />
               </div>
               {/* <div 
@@ -106,58 +130,58 @@ function App() {
       }
 
   //function for a simpler chloropleth map
-  // function makeBlackHat(){
+  function makeBlackHat(){
 
-  //   return (
-  //     <>
-  //       <div style={{'width':'100%','height':'50%','display':'inline-block'}}>
-  //         <div 
-  //           style={{'height': '100%','width':'calc(100% - 15em)','display':'inline-block'}}
-  //         >
-  //             <Blackhat
-  //               map={map}
-  //               data={gunData}
-  //               ToolTip={ToolTip}
-  //               zoomedState={zoomedState}
-  //               setSelectedStuff={setSelectedStuff}
-  //               setZoomedState={setZoomedState}
-  //               brushedState={brushedState}
-  //               setBrushedState={setBrushedState}
-  //             />
-  //         </div>
-  //         <div 
-  //           className={'shadow'}
-  //           style={{'height': '100%','width':'14em','display':'inline-block','verticalAlign':'text-bottom'}}
-  //         >
-  //           <h1>{'Instructions'}</h1>
-  //           <p>{'Click on each state to zoom and unzoom'}</p>
-  //         </div>
-  //       </div>
-  //       <div style={{'height': '49%','width':'99%'}}>
-  //         <div className={'title'} 
-  //           style={{'height':'2em','width':'100%','fontWeight':'bold','fontFamily':'Georgia'}}
-  //         >
-  //           {'Gun Deaths'}
-  //         </div>
-  //         <div style={{'height': 'calc(100% - 2em)','width': '50%','maxWidth': '60em','marginLeft':'25%'}}>
-  //           <BlackHatStats
-  //             data={gunData}
-  //             ToolTip={ToolTip}
-  //           />     
-  //         </div>   
-  //       </div>
-  //     </>
-  //   )
-  // }
+    return (
+      <>
+        <div style={{'width':'100%','height':'50%','display':'inline-block'}}>
+          <div 
+            style={{'height': '100%','width':'calc(100% - 15em)','display':'inline-block'}}
+          >
+              <Blackhat
+                map={blackmap}
+                data={gunData}
+                ToolTip={ToolTip}
+                zoomedState={zoomedState}
+                setSelectedStuff={setSelectedStuff}
+                setZoomedState={setZoomedState}
+                brushedState={brushedState}
+                setBrushedState={setBrushedState}
+              />
+          </div>
+          <div 
+            className={'shadow'}
+            style={{'height': '100%','width':'14em','display':'inline-block','verticalAlign':'text-bottom'}}
+          >
+            <h1>{'Instructions'}</h1>
+            <p>{'Click on each state to zoom and unzoom'}</p>
+          </div>
+        </div>
+        <div style={{'height': '49%','width':'99%'}}>
+          <div className={'title'} 
+            style={{'height':'2em','width':'100%','fontWeight':'bold','fontFamily':'Georgia'}}
+          >
+            {'Gun Deaths'}
+          </div>
+          <div style={{'height': 'calc(100% - 2em)','width': '50%','maxWidth': '60em','marginLeft':'25%'}}>
+            <BlackHatStats
+              data={gunData}
+              ToolTip={ToolTip}
+            />     
+          </div>   
+        </div>
+      </>
+    )
+  }
 
   //toggle which visualization we're looking at based on the "viewToggle" state
   const hat = ()=>{
     if(viewToggle === 'whitehat'){
       return makeWhiteHat();
     }
-    // else{
-    //   return makeBlackHat();
-    // }
+    else{
+      return makeBlackHat();
+    }
   }
 
   return (
@@ -165,16 +189,12 @@ function App() {
       <div className={'header'}
         style={{'height':'2em','width':'100vw'}}
       >
-        <button 
-         onClick={() => setViewToggle('whitehat')}
-         className={viewToggle === 'whitehat'? 'inactiveButton':'activeButton'}
-         >{"White Hat"}
-        </button>
-        <button 
-         onClick={() => setViewToggle('blackhat')}
-         className={viewToggle === 'blackhat'? 'inactiveButton':'activeButton'}
-         >{"Black Hat"}
-        </button>
+          <Tabs
+            centered
+            defaultActiveKey="white"
+            items={items}
+            onChange={onChange}
+          />
       </div>
       <div className={'body'} 
         style={{'height':'calc(100vh - 2.5em)','width':'100vw'}}
