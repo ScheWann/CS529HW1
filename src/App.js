@@ -1,5 +1,6 @@
 import React, {useState,useEffect, useMemo} from 'react';
 import { Tabs } from 'antd';
+import { EnvironmentOutlined, GlobalOutlined} from '@ant-design/icons';
 import './App.css';
 import Whitehat from './Whitehat';
 import WhiteHatStats from './WhiteHatStats'
@@ -9,19 +10,43 @@ import * as d3 from 'd3';
 
 
 function App() {
-  // Tabs definations
-  const items = [
+  // black or white tabs definations
+  const appItems = [
     {
       key: 'white',
-      label: 'White Hat',
+      label: 'White Hat'
     },
     {
       key: 'black',
       label: 'Black Hat',
     }
   ];
+
+  // state or county tabs defination
+  const stateCountyItems = [
+    {
+      key: 'State',
+      label: (
+        <span>
+          <GlobalOutlined />
+          State
+        </span>
+      ),
+    },
+    {
+      key: 'County',
+      label: (
+        <span>
+          <EnvironmentOutlined />
+          County
+        </span>
+      ),
+    }
+  ];
+
   //state deciding if we are looking at the blackhat or whitehat visualization
-  const [viewToggle, setViewToggle] = useState('whitehat');
+  const [hatView, setHatView] = useState('whitehat');
+  const [stateCountyView, setStateCountyView] = useState('County');
 
   //state for the data, since it loads asynchronously
   const [whitemap, setwhiteMap] = useState();
@@ -66,11 +91,19 @@ function App() {
   }
 
   //function on clicking the tabs
-  const onChange = (key) => {
+  const onChangeHats = (key) => {
     if(key == 'white') {
-      setViewToggle('whitehat')
+      setHatView('whitehat')
     } else {
-      setViewToggle('blackhat')
+      setHatView('blackhat')
+    }
+  };
+
+  const onChangeStateCounty = (key) => {
+    if(key == 'State') {
+      setStateCountyView('state')
+    } else {
+      setStateCountyView('county')
     }
   };
 
@@ -86,7 +119,7 @@ function App() {
     
         return (
           <>
-            <div style={{'width':'100%','height':'100%','display':'inline-block'}}>
+            <div style={{'width':'100%','height':'100%','display':'flex','alignItems':'center'}}>
               <div 
                 style={{'height': '100%','width':'calc(100% - 15em)','display':'inline-block'}}
               >
@@ -94,20 +127,30 @@ function App() {
                     map={whitemap}
                     data={gunData}
                     ToolTip={ToolTip}
+                    stateCountyToggle={stateCountyView}
                     zoomedCounty={zoomedCounty}
                     setSelectedStuff={setSelectedStuff}
                     setZoomedCounty={setZoomedCounty}
+                    brushedState={brushedState}
+                    setBrushedState={setBrushedState}
                     brushedCounty={brushedCounty}
                     setBrushedCounty={setBrushedCounty}
                   />
               </div>
-              {/* <div 
+              <div 
                 className={'shadow'}
-                style={{'height': '100%','width':'14em','display':'inline-block','verticalAlign':'text-bottom'}}
+                style={{'height': '50%','width':'14em','display':'inline-block','verticalAlign':'text-bottom'}}
               >
-                <h1>{'Instructions'}</h1>
-                <p>{'Click on each state to zoom and unzoom'}</p>
-              </div> */}
+                <Tabs
+                // style={{'marginTop': 20}}
+                  centered
+                  // type="card"
+                  size='small'
+                  defaultActiveKey="white"
+                  items={stateCountyItems}
+                  onChange={onChangeStateCounty}
+                />
+              </div>
             </div>
             {/* <div style={{'height': '49%','width':'99%'}}>
               <div className={'title'} 
@@ -176,7 +219,7 @@ function App() {
 
   //toggle which visualization we're looking at based on the "viewToggle" state
   const hat = ()=>{
-    if(viewToggle === 'whitehat'){
+    if(hatView === 'whitehat'){
       return makeWhiteHat();
     }
     else{
@@ -192,8 +235,8 @@ function App() {
           <Tabs
             centered
             defaultActiveKey="white"
-            items={items}
-            onChange={onChange}
+            items={appItems}
+            onChange={onChangeHats}
           />
       </div>
       <div className={'body'} 

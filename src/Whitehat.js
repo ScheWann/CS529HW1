@@ -1,14 +1,17 @@
-import React, {useRef, useMemo, useState} from 'react';
+import React, {useRef, useMemo, useState, useEffect} from 'react';
 import useSVGCanvas from './useSVGCanvas.js';
 import * as topojson from "topojson";
 import * as d3 from 'd3';
 
 export default function Whitehat(props){
+    
     //this is a generic component for plotting a d3 plot
     const d3Container = useRef(null);
+
     //this automatically constructs an svg canvas the size of the parent container (height and width)
     //tTip automatically attaches a div of the class 'tooltip' if it doesn't already exist
     //this will automatically resize when the window changes so passing svg to a useeffect will re-trigger
+    
     const [svg, height, width, tTip] = useSVGCanvas(d3Container);
     const stateFormFIPS = {
         "1": { "PostalAbbr": "AL", "State": "Alabama" },
@@ -67,10 +70,10 @@ export default function Whitehat(props){
         "69": { "PostalAbbr": "MP", "State": "Northern Mariana Islands" },
         "72": { "PostalAbbr": "PR", "State": "Puerto Rico" },
         "78": { "PostalAbbr": "VI", "State": "Virgin Islands" },
-      };
+    };
+
     var isZoomed = false;
-    //TODO: change the line below to change the size of the white-hat maximum bubble size
-    const maxRadius = width/100;
+
     //albers usa projection puts alaska in the corner
     //this automatically convert latitude and longitude to coordinates on the svg canvas
     const projection = d3.geoAlbersUsa().translate([width/2,height/2]);
@@ -84,32 +87,31 @@ export default function Whitehat(props){
         return string.replace(' ','_').replace(' ','_')
     }
 
-
     //This is the main loop that renders the code once the data loads
-    //TODO: edit or replace this code to create your white-hat version of the map view; for example, change the color map based on colorbrewer2, 
     const mapGroupSelection = useMemo(()=>{
         //wait until the svg is rendered and data is loaded
         if(svg !== undefined & props.map !== undefined & props.data !== undefined){
 
             const stateData = props.data.states;
             const countyData = props.data.counties;
+            
             //calucate the gun death rate per 100000
             const getEncodedFeature = d => Math.round(((d.count * 100000) / d.population) * 10) / 10
-            // const getEncodedFeature = d => d.count;
+
 
             //this section of code sets up the colormap
             //get each state count of gunshot
             const stateCounts = Object.values(stateData).map(getEncodedFeature);
             const countyCounts = Object.values(countyData).map(getEncodedFeature);
+            
             //get color extends for the color legend
             const [stateMin, stateMax] = d3.extent(stateCounts);
             const [countyMin, countyMax] = d3.extent(countyCounts)
+
             //color map scale, scales numbers to a smaller range to use with a d3 color scale
-            //we're using 1-0 to invert the red-yellow-green color scale
-            //so red is bad (p.s. this is not a good color scheme still)
             const stateScale = d3.scaleLinear()
                 .domain([stateMin, stateMax])
-                .range([1, 0]);
+                .range([0, 4]);
 
             const countyScale = d3.scaleLinear()
                 .domain([countyMin, countyMax])
@@ -119,7 +121,7 @@ export default function Whitehat(props){
             const colorMap = d3.interpolateBlues
 
             //this set of functions extracts the features given the state name from the geojson
-            function getCount(name){
+            function getStateCount(name){
                 //map uses full name, dataset uses abreviations
                 name = cleanString(name);
                 let entry = stateData.filter(d=>d.state===name);
@@ -140,7 +142,7 @@ export default function Whitehat(props){
             }
 
             function getStateVal(name){
-                let count = getCount(name);
+                let count = getStateCount(name);
                 let val = stateScale(count);
                 return val
             }
@@ -149,6 +151,26 @@ export default function Whitehat(props){
                 let count = getCountyCount(id, name);
                 let val = countyScale(count);
                 return val
+            }
+
+            //get state tip data
+            function getStateTipData(name) {
+                let entry = stateData.filter(d=>d.state===name);
+                if(entry === undefined | entry.length < 1){
+                    return {
+                        rate: 0,
+                        population: 'unknown',
+                        state: name,
+                        count: 0
+                    }
+                }
+                let countyDir = {
+                    rate: getEncodedFeature(entry[0]),
+                    population: entry[0].population,
+                    state: entry[0].abreviation,
+                    count: entry[0].count
+                }
+                return countyDir
             }
 
             //get county tip data
@@ -179,107 +201,210 @@ export default function Whitehat(props){
                 return colorMap(getCountyVal(d.id, d.properties.name))
             }
 
-            //clear earlier drawings
-            svg.selectAll('g').remove();
-
-            //draw borders from map and add tooltip
-            let mapGroup = svg.append('g').attr('class','mapbox');
-            mapGroup.append("g")
-            .selectAll("path")
-            .data(topojson.feature(props.map, props.map.objects.counties).features).enter()
-            .append("path").attr("class", "county")
-            .attr('id',d=> d.id)
-            .attr("d", geoGenerator)
-            .attr('fill',getCountyColor)
-            .attr('stroke','black')
-            .attr('stroke-width',.1)   
-            .on('mouseover',(e,d)=>{
-                let county = cleanString(d.properties.name);
-                //this updates the brushed state
-                if(props.brushedCounty !== county){
-                    props.setBrushedCounty(county);
-                }
-                let cname = d.properties.name;
-                let countyTip = getCountyTipData(d.id, cname);
-                let text = '<strong>' + cname + ', ' + countyTip.state + '</strong>' + '</br>'
-                    + '<div class="toolTipTextStyle">' + 'Gun Deaths per 100000:&nbsp;&nbsp;' + '<p class="toolTipFont">' + countyTip.rate + '</p>' + '</div>'
-                    + '<div class="toolTipTextStyle">' + 'Victims:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + countyTip.count + '</p>'+ '</div>'
-                    + '<div class="toolTipTextStyle">' + 'Population:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + countyTip.population + '</p>' + '</div>'
-                d3.select(`[id="${d.id}"]`)
-                    .style("stroke", "#666")
-                    .style("stroke-width", 1.5)
-                tTip.html(text);
-            }).on('mousemove',(e)=>{
-                //see app.js for the helper function that makes this easier
-                props.ToolTip.moveTTipEvent(tTip,e);
-            }).on('mouseout',(e,d)=>{
-                d3.select(`[id="${d.id}"]`)
-                    .style("stroke", "black")
-                    .style("stroke-width", .1)
-                props.setBrushedCounty();
-                props.ToolTip.hideTTip(tTip);
-            });
-                       
-            //draw a color legend, automatically scaled based on data extents
-            function drawLegend(){
-                let bounds = mapGroup.node().getBBox();
-                const barHeight = Math.min(height/10,40);
-                
-                let legendX = bounds.x + 100 + bounds.width;
-                const barWidth = Math.min((width - legendX)/3,40);
-                const fontHeight = Math.min(barWidth/2,16);
-                let legendY = bounds.y + 5*fontHeight;
-                
-                let colorLData = [];
-
-                let legendTempArr = [0, 1, 2, 3, 4, 5]
-                for(let i = 0; i < legendTempArr.length; i++) {
-                    let val = countyScale(legendTempArr[i]);
-                    let color = colorMap(val);
-                    let entry = {
-                        'x': legendX,
-                        'y': legendY,
-                        'value': legendTempArr[i],
-                        'color':color,
+            //draw states map
+            function drawStateMap() {
+                let stateMapGroup = svg.append('g').attr('class','stateBox');
+                stateMapGroup.append("g")
+                .selectAll("path")
+                .data(topojson.feature(props.map, props.map.objects.states).features).enter()
+                .append("path").attr("class", "state")
+                .attr('id',d=> d.id)
+                .attr("d", geoGenerator)
+                .attr('fill',getStateColor)
+                .attr('stroke','black')
+                .attr('stroke-width',.1)   
+                .on('mouseover',(e,d)=>{
+                    let state = cleanString(d.properties.name);
+                    //this updates the brushed state
+                    if(props.brushedState !== state){
+                        props.setBrushedState(state);
                     }
-                    if(i === legendTempArr.length - 1){
-                        entry.text = `${entry.value}+`
-                    } else {
-                        entry.text = (entry.value).toFixed(0);
-                    }       
-                    colorLData.push(entry);
-                    legendY += barHeight;
-                }
-                svg.selectAll('.legendRect').remove();
-                svg.selectAll('.legendRect')
-                    .data(colorLData).enter()
-                    .append('rect').attr('class','legendRect')
-                    .attr('x',d=>d.x)
-                    .attr('y',d=>d.y)
-                    .attr('fill',d=>d.color)
-                    .attr('height',barHeight)
-                    .attr('width',barWidth);
+                    let sname = d.properties.name;
+                    let stateTip = getStateTipData(sname);
+                    let text = '<strong>' + sname + ', ' + '</strong>' + '</br>'
+                        + '<div class="toolTipTextStyle">' + 'Gun Deaths per 100000:&nbsp;&nbsp;' + '<p class="toolTipFont">' + stateTip.rate + '</p>' + '</div>'
+                        + '<div class="toolTipTextStyle">' + 'Victims:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + stateTip.count + '</p>'+ '</div>'
+                        + '<div class="toolTipTextStyle">' + 'Population:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + stateTip.population + '</p>' + '</div>'
+                    d3.select(`[id="${d.id}"]`)
+                        .style("stroke", "#666")
+                        .style("stroke-width", 1.5)
+                    tTip.html(text);
+                }).on('mousemove',(e)=>{
+                    props.ToolTip.moveTTipEvent(tTip,e);
+                }).on('mouseout',(e,d)=>{
+                    d3.select(`[id="${d.id}"]`)
+                        .style("stroke", "black")
+                        .style("stroke-width", .1)
+                    props.setBrushedCounty();
+                    props.ToolTip.hideTTip(tTip);
+                });
+
+                //draw a state legend
+                function drawStateLegend(){
+                    let bounds = stateMapGroup.node().getBBox();
+                    const barHeight = Math.min(height/10,40);
+                    
+                    let legendX = bounds.x + 100 + bounds.width;
+                    const barWidth = Math.min((width - legendX)/3,40);
+                    const fontHeight = Math.min(barWidth/2,16);
+                    let legendY = bounds.y + 5*fontHeight;
+                    
+                    let colorLData = [];
     
-                svg.selectAll('.legendText').remove();
-                const legendTitle = {
-                    'x': legendX - 90,
-                    'y': bounds.y,
-                    'text': 'Gun Deaths per 100000' 
+                    let legendTempArr = [0, 1, 2, 3, 4, 5]
+                    for(let i = 0; i < legendTempArr.length; i++) {
+                        let val = stateScale(legendTempArr[i]);
+                        let color = colorMap(val);
+                        let entry = {
+                            'x': legendX,
+                            'y': legendY,
+                            'value': legendTempArr[i],
+                            'color':color,
+                        }
+                        if(i === legendTempArr.length - 1){
+                            entry.text = `${entry.value}+`
+                        } else {
+                            entry.text = (entry.value).toFixed(0);
+                        }       
+                        colorLData.push(entry);
+                        legendY += barHeight;
+                    }
+                    svg.selectAll('.legendRect').remove();
+                    svg.selectAll('.legendRect')
+                        .data(colorLData).enter()
+                        .append('rect').attr('class','legendRect')
+                        .attr('x',d=>d.x)
+                        .attr('y',d=>d.y)
+                        .attr('fill',d=>d.color)
+                        .attr('height',barHeight)
+                        .attr('width',barWidth);
+    
+                    svg.selectAll('.legendText').remove();
+                    const legendTitle = {
+                        'x': legendX - 90,
+                        'y': bounds.y,
+                        'text': 'Gun Deaths per 100000' 
+                    }
+                    svg.selectAll('.legendText')
+                        .data([legendTitle].concat(colorLData)).enter()
+                        .append('text').attr('class','legendText')
+                        .attr('x',d=>d.x+barWidth+5)
+                        .attr('y',d=>d.y+barHeight/2 + fontHeight/4)
+                        .attr('font-size',(d,i) => i == 0? 1.2*fontHeight:fontHeight)
+                        .text(d=>d.text);
                 }
-                svg.selectAll('.legendText')
-                    .data([legendTitle].concat(colorLData)).enter()
-                    .append('text').attr('class','legendText')
-                    .attr('x',d=>d.x+barWidth+5)
-                    .attr('y',d=>d.y+barHeight/2 + fontHeight/4)
-                    .attr('font-size',(d,i) => i == 0? 1.2*fontHeight:fontHeight)
-                    .text(d=>d.text);
+
+                drawStateLegend()   
+                
+                return stateMapGroup
             }
+            
+            //draw county map
+            function drawCountyMap() {
+                let countyMapGroup = svg.append('g').attr('class','countybox');
+                countyMapGroup.append("g")
+                .selectAll("path")
+                .data(topojson.feature(props.map, props.map.objects.counties).features).enter()
+                .append("path").attr("class", "county")
+                .attr('id',d=> d.id)
+                .attr("d", geoGenerator)
+                .attr('fill',getCountyColor)
+                .attr('stroke','black')
+                .attr('stroke-width',.1)   
+                .on('mouseover',(e,d)=>{
+                    let county = cleanString(d.properties.name);
+                    //this updates the brushed state
+                    if(props.brushedCounty !== county){
+                        props.setBrushedCounty(county);
+                    }
+                    let cname = d.properties.name;
+                    let countyTip = getCountyTipData(d.id, cname);
+                    let text = '<strong>' + cname + ', ' + countyTip.state + '</strong>' + '</br>'
+                        + '<div class="toolTipTextStyle">' + 'Gun Deaths per 100000:&nbsp;&nbsp;' + '<p class="toolTipFont">' + countyTip.rate + '</p>' + '</div>'
+                        + '<div class="toolTipTextStyle">' + 'Victims:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + countyTip.count + '</p>'+ '</div>'
+                        + '<div class="toolTipTextStyle">' + 'Population:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + countyTip.population + '</p>' + '</div>'
+                    d3.select(`[id="${d.id}"]`)
+                        .style("stroke", "#666")
+                        .style("stroke-width", 1.5)
+                    tTip.html(text);
+                }).on('mousemove',(e)=>{
+                    props.ToolTip.moveTTipEvent(tTip,e);
+                }).on('mouseout',(e,d)=>{
+                    d3.select(`[id="${d.id}"]`)
+                        .style("stroke", "black")
+                        .style("stroke-width", .1)
+                    props.setBrushedCounty();
+                    props.ToolTip.hideTTip(tTip);
+                });
+                            
+                //draw a county color legend
+                function drawCountyLegend(){
+                    let bounds = countyMapGroup.node().getBBox();
+                    const barHeight = Math.min(height/10,40);
+                    
+                    let legendX = bounds.x + 100 + bounds.width;
+                    const barWidth = Math.min((width - legendX)/3,40);
+                    const fontHeight = Math.min(barWidth/2,16);
+                    let legendY = bounds.y + 5*fontHeight;
+                    
+                    let colorLData = [];
+    
+                    let legendTempArr = [0, 1, 2, 3, 4, 5]
+                    for(let i = 0; i < legendTempArr.length; i++) {
+                        let val = countyScale(legendTempArr[i]);
+                        let color = colorMap(val);
+                        let entry = {
+                            'x': legendX,
+                            'y': legendY,
+                            'value': legendTempArr[i],
+                            'color':color,
+                        }
+                        if(i === legendTempArr.length - 1){
+                            entry.text = `${entry.value}+`
+                        } else {
+                            entry.text = (entry.value).toFixed(0);
+                        }       
+                        colorLData.push(entry);
+                        legendY += barHeight;
+                    }
+                    svg.selectAll('.legendRect').remove();
+                    svg.selectAll('.legendRect')
+                        .data(colorLData).enter()
+                        .append('rect').attr('class','legendRect')
+                        .attr('x',d=>d.x)
+                        .attr('y',d=>d.y)
+                        .attr('fill',d=>d.color)
+                        .attr('height',barHeight)
+                        .attr('width',barWidth);
+    
+                    svg.selectAll('.legendText').remove();
+                    const legendTitle = {
+                        'x': legendX - 90,
+                        'y': bounds.y,
+                        'text': 'Gun Deaths per 100000' 
+                    }
+                    svg.selectAll('.legendText')
+                        .data([legendTitle].concat(colorLData)).enter()
+                        .append('text').attr('class','legendText')
+                        .attr('x',d=>d.x+barWidth+5)
+                        .attr('y',d=>d.y+barHeight/2 + fontHeight/4)
+                        .attr('font-size',(d,i) => i == 0? 1.2*fontHeight:fontHeight)
+                        .text(d=>d.text);
+                }
 
-            drawLegend();
-            return mapGroup
+                drawCountyLegend(); 
+
+                return countyMapGroup
+            }
+            if(props.stateCountyToggle === "county") {
+                svg.selectAll('g').remove();
+                drawCountyMap()
+            } else {
+                svg.selectAll('g').remove();
+                drawStateMap()
+            }
         }
-    },[svg,props.map,props.data])
-
+    },[svg,props.map,props.data,props.stateCountyToggle])
     //This adds zooming. Triggers whenever the function above finishes
     //this section can be included in the main body but is here as an example 
     //of how to do multiple hooks so updates don't have to occur in every state
