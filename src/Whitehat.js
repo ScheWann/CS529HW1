@@ -94,7 +94,8 @@ export default function Whitehat(props){
             const stateData = props.data.states;
             const countyData = props.data.counties;
             //calucate the gun death rate per 100000
-            const getEncodedFeature = d => ((d.count * 100000) / d.population).toFixed(1)
+            const getEncodedFeature = d => Math.round(((d.count * 100000) / d.population) * 10) / 10
+            // const getEncodedFeature = d => d.count;
 
             //this section of code sets up the colormap
             //get each state count of gunshot
@@ -103,20 +104,20 @@ export default function Whitehat(props){
             //get color extends for the color legend
             const [stateMin, stateMax] = d3.extent(stateCounts);
             const [countyMin, countyMax] = d3.extent(countyCounts)
-            // console.log(countyMin, countyMax, 'plplplplplp')
             //color map scale, scales numbers to a smaller range to use with a d3 color scale
             //we're using 1-0 to invert the red-yellow-green color scale
             //so red is bad (p.s. this is not a good color scheme still)
             const stateScale = d3.scaleLinear()
-                .domain([stateMin,stateMax])
+                .domain([stateMin, stateMax])
                 .range([1, 0]);
+
             const countyScale = d3.scaleLinear()
                 .domain([countyMin, countyMax])
-                .range([1, 0]);
-                
+                .range([0, 100]);
             //this function takes a number 0-1 and returns a color
             
-            const colorMap = d3.interpolateCividis
+            const colorMap = d3.interpolateBlues
+
             //this set of functions extracts the features given the state name from the geojson
             function getCount(name){
                 //map uses full name, dataset uses abreviations
@@ -147,7 +148,6 @@ export default function Whitehat(props){
             function getCountyVal(id, name) {
                 let count = getCountyCount(id, name);
                 let val = countyScale(count);
-                console.log(val, 'no clear')
                 return val
             }
 
@@ -188,6 +188,7 @@ export default function Whitehat(props){
             .selectAll("path")
             .data(topojson.feature(props.map, props.map.objects.counties).features).enter()
             .append("path").attr("class", "county")
+            .attr('id',d=> d.id)
             .attr("d", geoGenerator)
             .attr('fill',getCountyColor)
             .attr('stroke','black')
@@ -201,96 +202,80 @@ export default function Whitehat(props){
                 let cname = d.properties.name;
                 let countyTip = getCountyTipData(d.id, cname);
                 let text = '<strong>' + cname + ', ' + countyTip.state + '</strong>' + '</br>'
-                    + 'Gun Deaths per 100000: ' + countyTip.rate + '</br>'
-                    + 'Victims: ' + countyTip.count + '</br>'
-                    + 'Population: ' + countyTip.population
+                    + '<div class="toolTipTextStyle">' + 'Gun Deaths per 100000:&nbsp;&nbsp;' + '<p class="toolTipFont">' + countyTip.rate + '</p>' + '</div>'
+                    + '<div class="toolTipTextStyle">' + 'Victims:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + countyTip.count + '</p>'+ '</div>'
+                    + '<div class="toolTipTextStyle">' + 'Population:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + countyTip.population + '</p>' + '</div>'
+                d3.select(`[id="${d.id}"]`)
+                    .style("stroke", "#666")
+                    .style("stroke-width", 1.5)
                 tTip.html(text);
             }).on('mousemove',(e)=>{
                 //see app.js for the helper function that makes this easier
                 props.ToolTip.moveTTipEvent(tTip,e);
             }).on('mouseout',(e,d)=>{
+                d3.select(`[id="${d.id}"]`)
+                    .style("stroke", "black")
+                    .style("stroke-width", .1)
                 props.setBrushedCounty();
                 props.ToolTip.hideTTip(tTip);
             });
-
-
-
-            //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius). 
-            //draw markers for each city
-            // const cityData = props.data.cities
-            // const cityMax = d3.max(cityData.map(d=>d.count));
-            // const cityScale = d3.scaleLinear()
-            //     .domain([0,cityMax])
-            //     .range([0,maxRadius]);
-
-            // mapGroup.selectAll('.city').remove();
-
-            //TODO: Add code for a tooltip when you mouse over the city (hint: use the same code for the state tooltip events .on... and modify what is used for the tTip.html)
-            //OPTIONAL: change the color or opacity
-            // mapGroup.selectAll('.city')
-            //     .data(cityData).enter()
-            //     .append('circle').attr('class','city')
-            //     .attr('id',d=>d.key)
-            //     .attr('cx',d=> projection([d.lng,d.lat])[0])
-            //     .attr('cy',d=> projection([d.lng,d.lat])[1])
-            //     .attr('r',d=>cityScale(d.count))
-            //     .attr('opacity',.5);                
-
-            
+                       
             //draw a color legend, automatically scaled based on data extents
-            // function drawLegend(){
-            //     let bounds = mapGroup.node().getBBox();
-            //     const barHeight = Math.min(height/10,40);
+            function drawLegend(){
+                let bounds = mapGroup.node().getBBox();
+                const barHeight = Math.min(height/10,40);
                 
-            //     let legendX = bounds.x + 200 + bounds.width;
-            //     const barWidth = Math.min((width - legendX)/3,40);
-            //     const fontHeight = Math.min(barWidth/2,16);
-            //     let legendY = bounds.y + 5*fontHeight;
+                let legendX = bounds.x + 100 + bounds.width;
+                const barWidth = Math.min((width - legendX)/3,40);
+                const fontHeight = Math.min(barWidth/2,16);
+                let legendY = bounds.y + 5*fontHeight;
                 
-            //     let colorLData = [];
-            //     //OPTIONAL: EDIT THE VALUES IN THE ARRAY TO CHANGE THE NUMBER OF ITEMS IN THE COLOR LEGEND
-            //     for(let ratio of [0.1,.2,.3,.4,.5,.6,.7,.8,.9,.99]){
-            //         let val = (1-ratio)*countyMin + ratio*countyMax;
-            //         let scaledVal = stateScale(val);
-            //         let color = colorMap(scaledVal);
-            //         let entry = {
-            //             'x': legendX,
-            //             'y': legendY,
-            //             'value': val,
-            //             'color':color,
-            //         }
-            //         entry.text = (entry.value).toFixed(0);
-            
-            //         colorLData.push(entry);
-            //         legendY += barHeight;
-            //     }
-    
-            //     svg.selectAll('.legendRect').remove();
-            //     svg.selectAll('.legendRect')
-            //         .data(colorLData).enter()
-            //         .append('rect').attr('class','legendRect')
-            //         .attr('x',d=>d.x)
-            //         .attr('y',d=>d.y)
-            //         .attr('fill',d=>d.color)
-            //         .attr('height',barHeight)
-            //         .attr('width',barWidth);
-    
-            //     svg.selectAll('.legendText').remove();
-            //     const legendTitle = {
-            //         'x': legendX  - 70,
-            //         'y': bounds.y,
-            //         'text': 'Gun Deaths' 
-            //     }
-            //     svg.selectAll('.legendText')
-            //         .data([legendTitle].concat(colorLData)).enter()
-            //         .append('text').attr('class','legendText')
-            //         .attr('x',d=>d.x+barWidth+5)
-            //         .attr('y',d=>d.y+barHeight/2 + fontHeight/4)
-            //         .attr('font-size',(d,i) => i == 0? 1.2*fontHeight:fontHeight)
-            //         .text(d=>d.text);
-            // }
+                let colorLData = [];
 
-            // drawLegend();
+                let legendTempArr = [0, 1, 2, 3, 4, 5]
+                for(let i = 0; i < legendTempArr.length; i++) {
+                    let val = countyScale(legendTempArr[i]);
+                    let color = colorMap(val);
+                    let entry = {
+                        'x': legendX,
+                        'y': legendY,
+                        'value': legendTempArr[i],
+                        'color':color,
+                    }
+                    if(i === legendTempArr.length - 1){
+                        entry.text = `${entry.value}+`
+                    } else {
+                        entry.text = (entry.value).toFixed(0);
+                    }       
+                    colorLData.push(entry);
+                    legendY += barHeight;
+                }
+                svg.selectAll('.legendRect').remove();
+                svg.selectAll('.legendRect')
+                    .data(colorLData).enter()
+                    .append('rect').attr('class','legendRect')
+                    .attr('x',d=>d.x)
+                    .attr('y',d=>d.y)
+                    .attr('fill',d=>d.color)
+                    .attr('height',barHeight)
+                    .attr('width',barWidth);
+    
+                svg.selectAll('.legendText').remove();
+                const legendTitle = {
+                    'x': legendX - 90,
+                    'y': bounds.y,
+                    'text': 'Gun Deaths per 100000' 
+                }
+                svg.selectAll('.legendText')
+                    .data([legendTitle].concat(colorLData)).enter()
+                    .append('text').attr('class','legendText')
+                    .attr('x',d=>d.x+barWidth+5)
+                    .attr('y',d=>d.y+barHeight/2 + fontHeight/4)
+                    .attr('font-size',(d,i) => i == 0? 1.2*fontHeight:fontHeight)
+                    .text(d=>d.text);
+            }
+
+            drawLegend();
             return mapGroup
         }
     },[svg,props.map,props.data])

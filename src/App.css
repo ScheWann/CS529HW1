@@ -2,21 +2,33 @@
   text-align: center;
 }
 
-.tooltip {	
+.tooltip {
   position: absolute;
   z-index: 10;
   opacity: 1!important;			
-  text-align: center;			
-  width: auto;		
+  width: auto;
   max-width: 50vw;			
   height: auto;					
   padding: 10px;				
   font: 12px sans-serif;		
-  background: rgb(172, 173, 173);	
-  border: 0px;		
+  background: white;
+  border: 1px solid #999;		
   border-radius: 8px;			
   pointer-events: none;	
   font-size: .7em!important;		
+}
+
+.toolTipTextStyle {
+  display: flex; 
+  align-items:center
+}
+
+.toolTipFont {
+  color: #0077b6;
+}
+
+.legendText {
+  font-size: 12px;
 }
 
 .d3-component{
