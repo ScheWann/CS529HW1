@@ -119,9 +119,9 @@ function App() {
     
         return (
           <>
-            <div style={{'width':'100%','height':'100%','display':'flex','alignItems':'center'}}>
+            <div style={{'width':'100%','height':'100%','display':'flex','alignItems':'center', 'justifyContent': 'center'}}>
               <div 
-                style={{'height': '100%','width':'calc(100% - 15em)','display':'inline-block'}}
+                style={{'height': '100%','width':'50%','display':'inline-block'}}
               >
                   <Whitehat
                     map={whitemap}
@@ -139,7 +139,18 @@ function App() {
                     setBrushedCounty={setBrushedCounty}
                   />
               </div>
-              <div 
+              <div style={{'height': '59%', width: '50%'}}>
+                <div style={{'height': 'calc(100% - 2em)','width': '100%'}}>
+                  <WhiteHatStats
+                    data={gunData}
+                    ToolTip={ToolTip}
+                    brushedState={brushedState}
+                    setBrushedState={setBrushedState}
+                    zoomedState={zoomedState}
+                  />     
+                </div>   
+              </div>
+              {/* <div 
                 className={'shadow'}
                 style={{'height': '50%','width':'14em','display':'inline-block','verticalAlign':'text-bottom'}}
               >
@@ -152,24 +163,8 @@ function App() {
                   items={stateCountyItems}
                   onChange={onChangeStateCounty}
                 />
-              </div>
+              </div> */}
             </div>
-            {/* <div style={{'height': '49%','width':'99%'}}>
-              <div className={'title'} 
-                style={{'height':'2em','width':'100%','fontWeight':'bold','fontFamily':'Georgia'}}
-              >
-                {'Gun Deaths'}
-              </div>
-              <div style={{'height': 'calc(100% - 2em)','width': '50%','maxWidth': '60em','marginLeft':'25%'}}>
-                <WhiteHatStats
-                  data={gunData}
-                  ToolTip={ToolTip}
-                  brushedState={brushedState}
-                  setBrushedState={setBrushedState}
-                  zoomedState={zoomedState}
-                />     
-              </div>   
-            </div> */}
           </>
         )
       }
@@ -202,7 +197,7 @@ function App() {
             <p>{'Click on each state to zoom and unzoom'}</p>
           </div>
         </div>
-        <div style={{'height': '49%','width':'99%'}}>
+        <div style={{'height': '60%','width':'99%'}}>
           <div className={'title'} 
             style={{'height':'2em','width':'100%','fontWeight':'bold','fontFamily':'Georgia'}}
           >
