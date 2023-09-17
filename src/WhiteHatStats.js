@@ -11,8 +11,6 @@ export default function WhiteHatStats(props){
     //this will automatically resize when the window changes so passing svg to a useeffect will re-trigger
     const [svg, height, width, tTip] = useSVGCanvas(d3Container);
 
-    // const margin = 50;
-    const radius = 10;
     const marginTop = 10;
     const marginRight = 10;
     const marginBottom = 20;
@@ -22,17 +20,18 @@ export default function WhiteHatStats(props){
     //TODO: modify or replace the code below to draw a more truthful or insightful representation of the dataset. This other representation could be a histogram, a stacked bar chart, etc.
     //this loop updates when the props.data changes or the window resizes
     //we can edit it to also use props.brushedState if you want to use linking
-    useEffect(()=>{
+    const statisticChart = useMemo(()=>{
         //wait until the data loads
         if(svg === undefined | props.data === undefined){ return }
-        var colors = ["#C9D6DF", "#F7EECF", "#E3E1B2", "#F9CAC8"];
+        
+        svg.selectAll('g').remove();
+        svg.selectAll('.barChartLegendRect').remove()
+        svg.selectAll('.barChartLegendRectText').remove()
         //aggregate gun deaths by state
         const data = props.data.states;
-        
         //get data for each state
         const plotData = [];
         for(let state of data){
-            const dd = drawingDifficulty[state.abreviation];
             let entry = {
                 'abreviation': state.abreviation,
                 'count': state.count,
@@ -64,11 +63,11 @@ export default function WhiteHatStats(props){
             }
             return val
         })
-        console.log(stack)
+        
         const xScale = d3.scaleBand().domain(plotData.map(d => d.abreviation)).range([marginLeft, width - marginRight]).padding(0.1);
 
         const yScale = d3.scaleLinear().domain([0, yMax]).range([height - marginBottom, marginTop])
-        
+        svg.selectAll('g').remove();
         svg.selectAll('g')
             .data(stack).enter()
             .append('g')
@@ -77,6 +76,7 @@ export default function WhiteHatStats(props){
             .append('rect')
                 .attr('x', d => xScale(d.data.abreviation))
                 .attr('y', d => yScale(d[1]))
+                .attr('id',d => d.data.name)
                 .attr('width', xScale.bandwidth())
                 .attr('height', d => {
                     return yScale(d[0])-yScale(d[1])
@@ -86,6 +86,11 @@ export default function WhiteHatStats(props){
                 .attr('stroke', 'lightblue')
                 .attr('stroke-width', .6)
                 .on('mouseover',(e,d)=>{
+                    let state = d.data.name;
+                    console.log(d)
+                    if(props.brushedState !== state){
+                        props.setBrushedState(state);
+                    }
                     let string = '<strong>' + d.data.name.replaceAll('_',' ') + '</strong>' + '</br>'
                         + '<div class="toolTipTextStyle">' + 'Gun Deaths:&nbsp;&nbsp;' + '<p class="toolTipFont">' + d.data.count + '</p>' + '</div>'
                         + '<div class="toolTipTextStyle">' + 'Gun Deaths per 100000:&nbsp;&nbsp;' + '<p class="toolTipFont">' + d.data.Gun_Deaths_per_100000 + '</p>' + '</div>'
@@ -96,6 +101,7 @@ export default function WhiteHatStats(props){
                 }).on('mousemove',(e)=>{
                     props.ToolTip.moveTTipEvent(tTip,e);
                 }).on('mouseout',(e,d)=>{
+                    props.setBrushedState();
                     props.ToolTip.hideTTip(tTip);
                 });
 
@@ -106,17 +112,34 @@ export default function WhiteHatStats(props){
         svg.append('g')
             .call(d3.axisLeft(yScale).tickFormat(d3.format('.2s')))
             .attr('transform', `translate(${marginLeft},0)`)
+        
+        function drawStateLegend(){
 
-        function drawLegend(){
             let bounds = svg.node().getBBox();
+
             svg.append("rect").attr('class','barChartLegendRect').attr("x", bounds.x + bounds.width - 200).attr("y",bounds.y).attr("width", 20).attr("height", 20).style("fill", "#0077b6")
             svg.append("rect").attr('class','barChartLegendRect').attr("x", bounds.x + bounds.width - 200).attr("y",bounds.y + 50).attr("width", 20).attr("height", 20).style("fill", "orange")
             svg.append("text").attr('class','barChartLegendRectText').attr("x", bounds.x + bounds.width - 160).attr("y",bounds.y + 10).text("Male victims").attr("alignment-baseline","middle")
             svg.append("text").attr('class','barChartLegendRectText').attr("x", bounds.x + bounds.width - 160).attr("y",bounds.y + 60).text("Female victims").attr("alignment-baseline","middle")
         }
-       
-        drawLegend()
-    },[props.data,svg]);
+
+        drawStateLegend()
+
+        return svg
+    },[svg, props.data, props.setBrushedState, props.brushedState]);
+
+    useMemo(()=>{
+        if(statisticChart !== undefined){
+            const isStateBrushed = props.brushedState !== undefined;
+            statisticChart.selectAll('.state')
+                .attr('opacity', isStateBrushed ? .4: .5)
+            if(isStateBrushed){
+                statisticChart.select('#'+props.brushedState)
+                    .attr('opacity',1)
+                    .attr('strokeWidth',3);
+            }
+        }
+    },[statisticChart, props.brushedState]);
 
     return (
         <div
@@ -125,58 +148,4 @@ export default function WhiteHatStats(props){
             ref={d3Container}
         ></div>
     );
-}
-//END of TODO #1.
-
- 
-const drawingDifficulty = {
-    'IL': 9,
-    'AL': 2,
-    'AK': 1,
-    'AR': 3,
-    'CA': 9.51,
-    'CO': 0,
-    'DE': 3.1,
-    'DC': 1.3,
-    'FL': 8.9,
-    'GA': 3.9,
-    'HI': 4.5,
-    'ID': 4,
-    'IN': 4.3,
-    'IA': 4.1,
-    'KS': 1.6,
-    'KY': 7,
-    'LA': 6.5,
-    'MN': 2.1,
-    'MO': 5.5,
-    'ME': 7.44,
-    'MD': 10,
-    'MA': 6.8,
-    'MI': 9.7,
-    'MN': 5.1,
-    'MS': 3.8,
-    'MT': 1.4,
-    'NE': 1.9,
-    'NV': .5,
-    'NH': 3.7,
-    'NJ': 9.1,
-    'NM': .2,
-    'NY': 8.7,
-    'NC': 8.5,
-    'ND': 2.3,
-    'OH': 5.8,
-    'OK': 6.05,
-    'OR': 4.7,
-    'PA': 4.01,
-    'RI': 8.4,
-    'SC': 7.1,
-    'SD': .9,
-    'TN': 3.333333,
-    'TX': 8.1,
-    'UT': 2.8,
-    'VT': 2.6,
-    'VA': 8.2,
-    'WA': 9.2,
-    'WV': 7.9,
-    'WY': 0,
 }

@@ -76,7 +76,7 @@ export default function Whitehat(props){
 
     //albers usa projection puts alaska in the corner
     //this automatically convert latitude and longitude to coordinates on the svg canvas
-    const projection = d3.geoAlbersUsa().translate([width/2.1,height/2]);
+    const projection = d3.geoAlbersUsa().translate([width/2,height/2]);
 
     //set up the path generator to draw the states
     const geoGenerator = d3.geoPath().projection(projection);
@@ -245,7 +245,7 @@ export default function Whitehat(props){
                 function drawStateLegend(){
                     let bounds = stateMapGroup.node().getBBox();
                     const barHeight = Math.min(height/10,40);
-                    let legendX = bounds.x + 20+ bounds.width;
+                    let legendX = bounds.x + 20 + bounds.width;
                     const barWidth = Math.min((width - legendX)/3,40);
                     const fontHeight = Math.min(barWidth/2,16);
                     let legendY = bounds.y + 5*fontHeight;
@@ -343,7 +343,7 @@ export default function Whitehat(props){
                     let bounds = countyMapGroup.node().getBBox();
                     const barHeight = Math.min(height/10,40);
                     
-                    let legendX = bounds.x + 100 + bounds.width;
+                    let legendX = bounds.x + 20 + bounds.width;
                     const barWidth = Math.min((width - legendX)/3,40);
                     const fontHeight = Math.min(barWidth/2,16);
                     let legendY = bounds.y + 5*fontHeight;
@@ -381,7 +381,7 @@ export default function Whitehat(props){
                     svg.selectAll('.legendText').remove();
                     const legendTitle = {
                         'x': legendX - 90,
-                        'y': bounds.y,
+                        'y': bounds.y - 20,
                         'text': 'Gun Deaths per 100000' 
                     }
                     svg.selectAll('.legendText')
@@ -427,8 +427,6 @@ export default function Whitehat(props){
         const zoom = d3.zoom()
             .on("zoom", zoomed);
 
-        //OPTIONAL: EDIT THIS CODE TO CHANGE WHAT HAPPENS WHEN YOU CLICK A STATE
-        //useful if you want to add brushing
         function clicked(event, d) {
             event.stopPropagation();
             if(isZoomed){
@@ -475,8 +473,6 @@ export default function Whitehat(props){
 
     },[mapGroupSelection, props.stateCountyToggle]);
 
-    //OPTIONAL: EDIT HERE TO CHANGE THE BRUSHING BEHAVIOUR IN THE MAP WHEN MOUSING OVER A STATE
-    //WILL UPDATE WHEN THE "BRUSHEDSTATE" VARIABLE CHANGES
     //brush the state by altering it's opacity when the property changes
     //brushed state can be on the same level but that makes it harder to use in linked views
     //so its in the parent app to simplify the "whitehat" part which uses linked views.

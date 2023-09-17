@@ -119,10 +119,22 @@ function App() {
     
         return (
           <>
-            <div style={{'width':'100%','height':'100%','display':'flex','alignItems':'center', 'justifyContent': 'center'}}>
+            <div style={{'width':'100%','height':'90%','display':'flex','alignItems':'center', 'justifyContent': 'center'}}>
               <div 
                 style={{'height': '100%','width':'50%','display':'inline-block'}}
               >
+                  <div 
+                    className={'shadow'}
+                    style={{'width':'50%','height': '10%', 'display':'inline-block','verticalAlign':'text-bottom'}}
+                  >
+                    <Tabs
+                      centered
+                      size='small'
+                      defaultActiveKey="white"
+                      items={stateCountyItems}
+                      onChange={onChangeStateCounty}
+                    />
+                  </div>  
                   <Whitehat
                     map={whitemap}
                     data={gunData}
@@ -139,31 +151,17 @@ function App() {
                     setBrushedCounty={setBrushedCounty}
                   />
               </div>
-              <div style={{'height': '59%', width: '50%'}}>
-                <div style={{'height': 'calc(100% - 2em)','width': '100%'}}>
+              <div style={{'height': '100%', 'width': '50%', 'display': 'flex', 'flexDirection': 'column'}}>
+
+                <div style={{'height': '50%','width': '100%'}}>
                   <WhiteHatStats
                     data={gunData}
                     ToolTip={ToolTip}
                     brushedState={brushedState}
                     setBrushedState={setBrushedState}
-                    zoomedState={zoomedState}
                   />     
-                </div>   
+                </div> 
               </div>
-              {/* <div 
-                className={'shadow'}
-                style={{'height': '50%','width':'14em','display':'inline-block','verticalAlign':'text-bottom'}}
-              >
-                <Tabs
-                // style={{'marginTop': 20}}
-                  centered
-                  // type="card"
-                  size='small'
-                  defaultActiveKey="white"
-                  items={stateCountyItems}
-                  onChange={onChangeStateCounty}
-                />
-              </div> */}
             </div>
           </>
         )
@@ -227,7 +225,7 @@ function App() {
   return (
     <div className="App">
       <div className={'header'}
-        style={{'height':'2em','width':'100vw'}}
+        style={{'width':'100vw'}}
       >
           <Tabs
             centered
