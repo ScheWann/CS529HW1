@@ -106,6 +106,16 @@ export default function WhiteHatStats(props){
         svg.append('g')
             .call(d3.axisLeft(yScale).tickFormat(d3.format('.2s')))
             .attr('transform', `translate(${marginLeft},0)`)
+
+        function drawLegend(){
+            let bounds = svg.node().getBBox();
+            svg.append("rect").attr('class','barChartLegendRect').attr("x", bounds.x + bounds.width - 200).attr("y",bounds.y).attr("width", 20).attr("height", 20).style("fill", "#0077b6")
+            svg.append("rect").attr('class','barChartLegendRect').attr("x", bounds.x + bounds.width - 200).attr("y",bounds.y + 50).attr("width", 20).attr("height", 20).style("fill", "orange")
+            svg.append("text").attr('class','barChartLegendRectText').attr("x", bounds.x + bounds.width - 160).attr("y",bounds.y + 10).text("Male victims").attr("alignment-baseline","middle")
+            svg.append("text").attr('class','barChartLegendRectText').attr("x", bounds.x + bounds.width - 160).attr("y",bounds.y + 60).text("Female victims").attr("alignment-baseline","middle")
+        }
+       
+        drawLegend()
     },[props.data,svg]);
 
     return (

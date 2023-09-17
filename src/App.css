@@ -31,6 +31,11 @@
   font-size: 12px;
 }
 
+.barChartLegendRectText {
+  font-size: 12px;
+  color: #999;
+}
+
 .d3-component{
   height: 100%!important;
   width: 100%!important;

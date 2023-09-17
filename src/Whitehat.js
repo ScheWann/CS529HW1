@@ -76,7 +76,7 @@ export default function Whitehat(props){
 
     //albers usa projection puts alaska in the corner
     //this automatically convert latitude and longitude to coordinates on the svg canvas
-    const projection = d3.geoAlbersUsa().translate([width/2,height/2]);
+    const projection = d3.geoAlbersUsa().translate([width/2.1,height/2]);
 
     //set up the path generator to draw the states
     const geoGenerator = d3.geoPath().projection(projection);
@@ -89,7 +89,6 @@ export default function Whitehat(props){
 
     //This is the main loop that renders the code once the data loads
     const mapGroupSelection = useMemo(()=>{
-        console.log(props.stateCountyToggle, 'lplplplplp')
         //wait until the svg is rendered and data is loaded
         if(svg !== undefined & props.map !== undefined & props.data !== undefined){
 
@@ -222,7 +221,6 @@ export default function Whitehat(props){
                     if(props.brushedState !== state){
                         props.setBrushedState(state);
                     }
-                    console.log(props.brushedState, state, 'now what is that')
                     let sname = d.properties.name;
                     let stateTip = getStateTipData(sname);
                     let text = '<strong>' + sname + '</strong>' + '</br>'
@@ -247,8 +245,7 @@ export default function Whitehat(props){
                 function drawStateLegend(){
                     let bounds = stateMapGroup.node().getBBox();
                     const barHeight = Math.min(height/10,40);
-                    
-                    let legendX = bounds.x + 100 + bounds.width;
+                    let legendX = bounds.x + 20+ bounds.width;
                     const barWidth = Math.min((width - legendX)/3,40);
                     const fontHeight = Math.min(barWidth/2,16);
                     let legendY = bounds.y + 5*fontHeight;
@@ -286,7 +283,7 @@ export default function Whitehat(props){
                     svg.selectAll('.legendText').remove();
                     const legendTitle = {
                         'x': legendX - 90,
-                        'y': bounds.y,
+                        'y': bounds.y - 20,
                         'text': 'Gun Deaths per 100000' 
                     }
                     svg.selectAll('.legendText')
@@ -485,7 +482,6 @@ export default function Whitehat(props){
     //so its in the parent app to simplify the "whitehat" part which uses linked views.
     useMemo(()=>{
         if(mapGroupSelection !== undefined){
-            console.log(props.stateCountyToggle, 'k000k')
             if(props.stateCountyToggle === "state") {
                 const isStateBrushed = props.brushedState !== undefined;
                 mapGroupSelection.selectAll('.state')
