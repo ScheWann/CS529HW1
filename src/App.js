@@ -46,7 +46,7 @@ function App() {
 
   //state deciding if we are looking at the blackhat or whitehat visualization
   const [hatView, setHatView] = useState('whitehat');
-  const [stateCountyView, setStateCountyView] = useState('County');
+  const [stateCountyView, setStateCountyView] = useState('state');
 
   //state for the data, since it loads asynchronously
   const [whitemap, setwhiteMap] = useState();
@@ -128,9 +128,11 @@ function App() {
                     data={gunData}
                     ToolTip={ToolTip}
                     stateCountyToggle={stateCountyView}
-                    zoomedCounty={zoomedCounty}
                     setSelectedStuff={setSelectedStuff}
+                    zoomedState={zoomedState}
+                    zoomedCounty={zoomedCounty}
                     setZoomedCounty={setZoomedCounty}
+                    setZoomedState={setZoomedCounty}
                     brushedState={brushedState}
                     setBrushedState={setBrushedState}
                     brushedCounty={brushedCounty}

@@ -89,9 +89,12 @@ export default function Whitehat(props){
 
     //This is the main loop that renders the code once the data loads
     const mapGroupSelection = useMemo(()=>{
+        console.log(props.stateCountyToggle, 'lplplplplp')
         //wait until the svg is rendered and data is loaded
         if(svg !== undefined & props.map !== undefined & props.data !== undefined){
 
+            //for return a map finally
+            let outputMap = {};
             const stateData = props.data.states;
             const countyData = props.data.counties;
             
@@ -119,6 +122,7 @@ export default function Whitehat(props){
             //this function takes a number 0-1 and returns a color
             
             const colorMap = d3.interpolateBlues
+
 
             //this set of functions extracts the features given the state name from the geojson
             function getStateCount(name){
@@ -204,24 +208,24 @@ export default function Whitehat(props){
             //draw states map
             function drawStateMap() {
                 let stateMapGroup = svg.append('g').attr('class','stateBox');
-                stateMapGroup.append("g")
-                .selectAll("path")
+                stateMapGroup.selectAll('path').filter('.state')
                 .data(topojson.feature(props.map, props.map.objects.states).features).enter()
-                .append("path").attr("class", "state")
-                .attr('id',d=> d.id)
-                .attr("d", geoGenerator)
+                .append('path').attr('class', 'state')
+                .attr('id',d => cleanString(d.properties.name))
+                .attr('d', geoGenerator)
                 .attr('fill',getStateColor)
                 .attr('stroke','black')
                 .attr('stroke-width',.1)   
-                .on('mouseover',(e,d)=>{
+                .on('mouseover',(e,d)=>{                   
                     let state = cleanString(d.properties.name);
                     //this updates the brushed state
                     if(props.brushedState !== state){
                         props.setBrushedState(state);
                     }
+                    console.log(props.brushedState, state, 'now what is that')
                     let sname = d.properties.name;
                     let stateTip = getStateTipData(sname);
-                    let text = '<strong>' + sname + ', ' + '</strong>' + '</br>'
+                    let text = '<strong>' + sname + '</strong>' + '</br>'
                         + '<div class="toolTipTextStyle">' + 'Gun Deaths per 100000:&nbsp;&nbsp;' + '<p class="toolTipFont">' + stateTip.rate + '</p>' + '</div>'
                         + '<div class="toolTipTextStyle">' + 'Victims:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + stateTip.count + '</p>'+ '</div>'
                         + '<div class="toolTipTextStyle">' + 'Population:&nbsp;&nbsp; ' + '<p class="toolTipFont">' + stateTip.population + '</p>' + '</div>'
@@ -235,7 +239,7 @@ export default function Whitehat(props){
                     d3.select(`[id="${d.id}"]`)
                         .style("stroke", "black")
                         .style("stroke-width", .1)
-                    props.setBrushedCounty();
+                    props.setBrushedState();
                     props.ToolTip.hideTTip(tTip);
                 });
 
@@ -306,14 +310,14 @@ export default function Whitehat(props){
                 .selectAll("path")
                 .data(topojson.feature(props.map, props.map.objects.counties).features).enter()
                 .append("path").attr("class", "county")
-                .attr('id',d=> d.id)
+                .attr('id',d=> cleanString(d.properties.name))
                 .attr("d", geoGenerator)
                 .attr('fill',getCountyColor)
                 .attr('stroke','black')
                 .attr('stroke-width',.1)   
                 .on('mouseover',(e,d)=>{
                     let county = cleanString(d.properties.name);
-                    //this updates the brushed state
+                    //this updates the brushed county
                     if(props.brushedCounty !== county){
                         props.setBrushedCounty(county);
                     }
@@ -396,15 +400,19 @@ export default function Whitehat(props){
 
                 return countyMapGroup
             }
+
             if(props.stateCountyToggle === "county") {
                 svg.selectAll('g').remove();
-                drawCountyMap()
+                outputMap = drawCountyMap()
             } else {
                 svg.selectAll('g').remove();
-                drawStateMap()
+                outputMap = drawStateMap()
             }
+
+            return outputMap
         }
-    },[svg,props.map,props.data,props.stateCountyToggle])
+    },[svg, props.map, props.data, props.stateCountyToggle])
+
     //This adds zooming. Triggers whenever the function above finishes
     //this section can be included in the main body but is here as an example 
     //of how to do multiple hooks so updates don't have to occur in every state
@@ -436,6 +444,7 @@ export default function Whitehat(props){
             else{
                 //get bounds of path from map
                 const [[x0, y0], [x1, y1]] = geoGenerator.bounds(d);
+
                 //zoom to bounds
                 mapGroupSelection.transition().duration(750).call(
                     zoom.transform,
@@ -446,6 +455,7 @@ export default function Whitehat(props){
                     d3.pointer(event, svg.node())
                 );
             }
+
             //sets the zoomed state property in the main app when we click on something
             //if we are zoomed in, unzoom instead
             isZoomed = !isZoomed;
@@ -455,13 +465,18 @@ export default function Whitehat(props){
                 props.setZoomedState(undefined);
             }
         }
-        
 
-        mapGroupSelection.selectAll('.state')
-            .attr('cursor','pointer')//so we know the states are clickable
+        if(props.stateCountyToggle === 'county') {
+            mapGroupSelection.selectAll('.county')
+            .attr('cursor','pointer')
             .on('click',clicked);
+        } else {
+            mapGroupSelection.selectAll('.state')
+            .attr('cursor','pointer')
+            .on('click',clicked);
+        }
 
-    },[mapGroupSelection]);
+    },[mapGroupSelection, props.stateCountyToggle]);
 
     //OPTIONAL: EDIT HERE TO CHANGE THE BRUSHING BEHAVIOUR IN THE MAP WHEN MOUSING OVER A STATE
     //WILL UPDATE WHEN THE "BRUSHEDSTATE" VARIABLE CHANGES
@@ -470,17 +485,30 @@ export default function Whitehat(props){
     //so its in the parent app to simplify the "whitehat" part which uses linked views.
     useMemo(()=>{
         if(mapGroupSelection !== undefined){
-            const isBrushed = props.brushedState !== undefined;
-            mapGroupSelection.selectAll('.state')
-                .attr('opacity',isBrushed? .4: .8)
-                .attr('strokeWidth',isBrushed? 1: 2);
-            if(isBrushed){
-                mapGroupSelection.select('#'+props.brushedState)
-                    .attr('opacity',1)
-                    .attr('strokeWidth',50);
+            console.log(props.stateCountyToggle, 'k000k')
+            if(props.stateCountyToggle === "state") {
+                const isStateBrushed = props.brushedState !== undefined;
+                mapGroupSelection.selectAll('.state')
+                    .attr('opacity', isStateBrushed ? .4: 1)
+                    .attr('strokeWidth', isStateBrushed ? 1: 2);
+                if(isStateBrushed){
+                    mapGroupSelection.select('#'+props.brushedState)
+                        .attr('opacity',1)
+                        .attr('strokeWidth',3);
+                }
+            } else {
+                const isCountyBrushed = props.brushedCounty !== undefined;
+                mapGroupSelection.selectAll('.county')
+                    .attr('opacity', isCountyBrushed ? .4: 1)
+                    .attr('strokeWidth', isCountyBrushed ? 1: 2);
+                if(isCountyBrushed){
+                    mapGroupSelection.select('#'+props.brushedCounty)
+                        .attr('opacity',1)
+                        .attr('strokeWidth',3);
+                }
             }
         }
-    },[mapGroupSelection,props.brushedState]);
+    },[mapGroupSelection,props.brushedState, props.brushedCounty, props.stateCountyToggle]);
     
     return (
         <div
