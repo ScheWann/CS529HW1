@@ -72,6 +72,8 @@ export default function Whitehat(props){
         "78": { "PostalAbbr": "VI", "State": "Virgin Islands" },
     };
 
+    const maxBarHeight = height/5;
+    
     var isZoomed = false;
 
     //albers usa projection puts alaska in the corner
@@ -96,7 +98,9 @@ export default function Whitehat(props){
             let outputMap = {};
             const stateData = props.data.states;
             const countyData = props.data.counties;
-            
+            const cityData = props.data.cities
+            const cityMax = d3.max(cityData.map(d=>d.count));
+
             //calucate the gun death rate per 100000
             const getEncodedFeature = d => Math.round(((d.count * 100000) / d.population) * 10) / 10
 
@@ -118,10 +122,13 @@ export default function Whitehat(props){
             const countyScale = d3.scaleLinear()
                 .domain([countyMin, countyMax])
                 .range([0, 100]);
-            //this function takes a number 0-1 and returns a color
-            
-            const colorMap = d3.interpolateBlues
 
+            const cityScale = d3.scaleLinear()
+                .domain([0,cityMax])
+                .range([0, maxBarHeight]);
+            
+            //this function takes a number 0-1 and returns a color
+            const colorMap = d3.interpolateBlues
 
             //this set of functions extracts the features given the state name from the geojson
             function getStateCount(name){
@@ -240,6 +247,19 @@ export default function Whitehat(props){
                     props.setBrushedState();
                     props.ToolTip.hideTTip(tTip);
                 });
+    
+                stateMapGroup.selectAll('.city').remove();
+    
+                stateMapGroup.selectAll('.city')
+                    .data(cityData).enter()
+                    .append('rect').attr('class','city')
+                    .attr('id',d=>d.key)
+                    .attr('x',d=> projection([d.lng,d.lat])[0])
+                    .attr('y',d=> projection([d.lng,d.lat])[1] - cityScale(d.count))
+                    .attr('fill', '#b5179e')
+                    .attr("fill-opacity", 0.5)
+                    .attr('width', 5)
+                    .attr('height',d=>cityScale(d.count))
 
                 //draw a state legend
                 function drawStateLegend(){
@@ -429,8 +449,10 @@ export default function Whitehat(props){
             .on("zoom", zoomed);
 
         function clicked(event, d) {
+            props.setSortState(d.properties.name.replace(' ','_'))
             event.stopPropagation();
             if(isZoomed){
+                props.setSortState()
                 mapGroupSelection.transition().duration(300).call(
                     zoom.transform,
                     d3.zoomIdentity.translate(0,0),
@@ -472,7 +494,7 @@ export default function Whitehat(props){
             .on('click',clicked);
         }
 
-    },[mapGroupSelection, props.stateCountyToggle]);
+    },[mapGroupSelection, props.stateCountyToggle, props.setSortState]);
 
     //brush the state by altering it's opacity when the property changes
     //brushed state can be on the same level but that makes it harder to use in linked views

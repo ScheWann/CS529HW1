@@ -91,7 +91,6 @@ export default function WhiteHatStats(props){
                 .attr('stroke-width', .6)
                 .on('mouseover',(e,d)=>{
                     let state = d.data.name;
-                    console.log(d)
                     if(props.brushedState !== state){
                         props.setBrushedState(state);
                     }

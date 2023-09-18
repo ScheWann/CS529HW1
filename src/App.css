@@ -40,6 +40,14 @@
   font-size: 10px;
   font-weight: bolder;
 }
+
+.introduction {
+  font-size: 15px;
+  font-family: sans-serif;
+  color: #333;
+  padding: 0 20px 0 20px;
+}
+
 .d3-component{
   height: 100%!important;
   width: 100%!important;

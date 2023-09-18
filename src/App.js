@@ -1,12 +1,13 @@
 import React, {useState,useEffect, useMemo} from 'react';
-import { Tabs } from 'antd';
+import { Tabs, Empty } from 'antd';
 import { EnvironmentOutlined, GlobalOutlined} from '@ant-design/icons';
 import './App.css';
 import Whitehat from './Whitehat';
 import WhiteHatStats from './WhiteHatStats'
 import Blackhat from './Blackhat';
 import BlackHatStats from './BlackHatStats';
-import WhiteHatCountyStats from './WhiteHatCountyStats'
+import WhiteHatCountyStats from './WhiteHatCountyStats';
+import WhiteHatState from './WhiteHatState';
 import * as d3 from 'd3';
 
 
@@ -65,7 +66,7 @@ function App() {
   const [brushedCounty, setBrushedCounty] = useState();
 
   //filter for the linked view in whitehat stats
-  const [sortKey,setSortKey] = useState('age');
+  const [sortState, setSortState] = useState();
 
   //load map contours
   //react looks into the '/public' folder by default
@@ -127,7 +128,7 @@ function App() {
               >
                   <div 
                     className={'shadow'}
-                    style={{'width':'50%','height': '10%', 'display':'inline-block','verticalAlign':'text-bottom'}}
+                    style={{'width':'50%','height': '15%', 'display':'inline-block','verticalAlign':'text-bottom'}}
                   >
                     <Tabs
                       centered
@@ -136,6 +137,9 @@ function App() {
                       items={stateCountyItems}
                       onChange={onChangeStateCounty}
                     />
+                    <div className='introduction'>
+                      Click one state in the US map to show the detailed city chart statistics
+                    </div>
                   </div>  
                   <Whitehat
                     map={whitemap}
@@ -143,6 +147,7 @@ function App() {
                     ToolTip={ToolTip}
                     stateCountyToggle={stateCountyView}
                     setSelectedStuff={setSelectedStuff}
+                    setSortState={setSortState}
                     zoomedState={zoomedState}
                     zoomedCounty={zoomedCounty}
                     setZoomedCounty={setZoomedCounty}
@@ -156,14 +161,21 @@ function App() {
               <div style={{'height': '100%', 'width': '50%', 'display': 'flex', 'flexDirection': 'column'}}>
                 {stateCountyStatsShow ? 
                 (<div style={{'height': '50%','width': '100%'}}>
-                  <WhiteHatStats
-                    data={gunData}
-                    ToolTip={ToolTip}
-                    brushedState={brushedState}
-                    setBrushedState={setBrushedState}
-                  />    
+                    <WhiteHatStats
+                      data={gunData}
+                      ToolTip={ToolTip}
+                      brushedState={brushedState}
+                      setBrushedState={setBrushedState}
+                  />
+                  <div style={{'height': '100%','width': '100%'}}> 
+                    { sortState ? (<WhiteHatState 
+                      ToolTip={ToolTip}
+                      sortState={sortState}
+                      data={gunData}
+                    />): <Empty style={{'paddingTop': 150}}/>}
+                  </div>    
                 </div>) : 
-                <div style={{'height': '100%','width': '100%'}}>
+                <div style={{'height': '100%','width': '100%','borderLeft': '1px dotted #999', 'marginLeft': 30}}>
                   <WhiteHatCountyStats
                     data={gunData}
                     ToolTip={ToolTip}
