@@ -27,8 +27,10 @@ export default function WhiteHatStats(props){
         svg.selectAll('g').remove();
         svg.selectAll('.barChartLegendRect').remove()
         svg.selectAll('.barChartLegendRectText').remove()
+        
         //aggregate gun deaths by state
         const data = props.data.states;
+        
         //get data for each state
         const plotData = [];
         for(let state of data){
@@ -47,6 +49,7 @@ export default function WhiteHatStats(props){
 
         const keys = Object.keys(plotData[0]).slice(6)
         const stack = d3.stack().keys(keys)(plotData)
+        
         //convert data for stack bar chart
         stack.map((d,i) => {
             d.map(d => {
@@ -55,7 +58,8 @@ export default function WhiteHatStats(props){
             })
             return d
           })
-        //calcualte the max gundeath value
+        
+          //calcualte the max gundeath value
         const yMax = d3.max(plotData, d => {
             var val = 0
             for(var k of keys){
@@ -131,8 +135,6 @@ export default function WhiteHatStats(props){
     useMemo(()=>{
         if(statisticChart !== undefined){
             const isStateBrushed = props.brushedState !== undefined;
-            statisticChart.selectAll('.state')
-                .attr('opacity', isStateBrushed ? .4: .5)
             if(isStateBrushed){
                 statisticChart.select('#'+props.brushedState)
                     .attr('opacity',1)

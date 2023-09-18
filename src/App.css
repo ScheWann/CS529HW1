@@ -36,6 +36,10 @@
   color: #999;
 }
 
+.circleText{
+  font-size: 10px;
+  font-weight: bolder;
+}
 .d3-component{
   height: 100%!important;
   width: 100%!important;

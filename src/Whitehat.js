@@ -302,6 +302,7 @@ export default function Whitehat(props){
             
             //draw county map
             function drawCountyMap() {
+                svg.selectAll('g').remove();
                 let countyMapGroup = svg.append('g').attr('class','countybox');
                 countyMapGroup.append("g")
                 .selectAll("path")

@@ -6,6 +6,7 @@ import Whitehat from './Whitehat';
 import WhiteHatStats from './WhiteHatStats'
 import Blackhat from './Blackhat';
 import BlackHatStats from './BlackHatStats';
+import WhiteHatCountyStats from './WhiteHatCountyStats'
 import * as d3 from 'd3';
 
 
@@ -47,11 +48,10 @@ function App() {
   //state deciding if we are looking at the blackhat or whitehat visualization
   const [hatView, setHatView] = useState('whitehat');
   const [stateCountyView, setStateCountyView] = useState('state');
-
+  const [stateCountyStatsShow, setStateCountyStatsShow] = useState(true);
   //state for the data, since it loads asynchronously
   const [whitemap, setwhiteMap] = useState();
   const [blackmap, setblackMap] = useState();
-
   const [gunData, setGunData] = useState();
 
   //at the top level and pass setZoomedState etc to the map
@@ -102,8 +102,10 @@ function App() {
   const onChangeStateCounty = (key) => {
     if(key == 'State') {
       setStateCountyView('state')
+      setStateCountyStatsShow(true)
     } else {
       setStateCountyView('county')
+      setStateCountyStatsShow(false)
     }
   };
 
@@ -152,15 +154,23 @@ function App() {
                   />
               </div>
               <div style={{'height': '100%', 'width': '50%', 'display': 'flex', 'flexDirection': 'column'}}>
-
-                <div style={{'height': '50%','width': '100%'}}>
+                {stateCountyStatsShow ? 
+                (<div style={{'height': '50%','width': '100%'}}>
                   <WhiteHatStats
                     data={gunData}
                     ToolTip={ToolTip}
                     brushedState={brushedState}
                     setBrushedState={setBrushedState}
-                  />     
-                </div> 
+                  />    
+                </div>) : 
+                <div style={{'height': '100%','width': '100%'}}>
+                  <WhiteHatCountyStats
+                    data={gunData}
+                    ToolTip={ToolTip}
+                    brushedCounty={brushedCounty}
+                    setBrushedCounty={setBrushedCounty}
+                  />
+                </div>} 
               </div>
             </div>
           </>
