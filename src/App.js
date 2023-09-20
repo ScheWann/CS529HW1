@@ -124,11 +124,11 @@ function App() {
           <>
             <div style={{'width':'100%','height':'90%','display':'flex','alignItems':'center', 'justifyContent': 'center'}}>
               <div 
-                style={{'height': '100%','width':'50%','display':'inline-block'}}
+                style={{'height': '100%','width':'50%'}}
               >
                   <div 
                     className={'shadow'}
-                    style={{'width':'50%','height': '15%', 'display':'inline-block','verticalAlign':'text-bottom'}}
+                    style={{'width':'50%', 'display':'inline-block','verticalAlign':'text-bottom'}}
                   >
                     <Tabs
                       centered
@@ -302,3 +302,4 @@ class ToolTip {
 }
 
 export default App;
+
